@@ -2,7 +2,7 @@
 // wandelt sie ins Format der Website um und speichert sie in data/workouts/ + data/index.json.
 // Wird von der GitHub Action aufgerufen, sobald der Kurzbefehl eine Datei hochlädt.
 
-import { readFile, writeFile, mkdir, readdir, unlink } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir, unlink, stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
@@ -114,9 +114,22 @@ export function normalizeHae(w) {
   };
 }
 
+// Sucht hochgeladene Exporte: data/upload.json (fester Name), data/inbox/*.json
+// und data/inbox, falls versehentlich als Datei statt Ordner angelegt.
+async function findUploads() {
+  const out = [];
+  const up = path.join(DATA, "upload.json");
+  if (existsSync(up)) out.push(up);
+  if (existsSync(INBOX)) {
+    if ((await stat(INBOX)).isDirectory()) {
+      for (const f of await readdir(INBOX)) if (f.toLowerCase().endsWith(".json")) out.push(path.join(INBOX, f));
+    } else out.push(INBOX);
+  }
+  return out;
+}
+
 async function main() {
-  if (!existsSync(INBOX)) { console.log("Keine neuen Dateien."); return; }
-  const files = (await readdir(INBOX)).filter((f) => f.toLowerCase().endsWith(".json"));
+  const files = await findUploads();
   if (!files.length) { console.log("Keine neuen Dateien."); return; }
   const index = existsSync(INDEX) ? JSON.parse(await readFile(INDEX, "utf8")) : { workouts: [] };
   const known = new Set(index.workouts.map((w) => w.id));
@@ -124,8 +137,8 @@ async function main() {
   await mkdir(WORKOUTS, { recursive: true });
   let added = 0;
 
-  for (const f of files) {
-    const file = path.join(INBOX, f);
+  for (const file of files) {
+    const f = path.basename(file);
     try {
       const raw = JSON.parse(await readFile(file, "utf8"));
       const list = raw?.data?.workouts ?? raw?.workouts ?? (Array.isArray(raw) ? raw : [raw]);
