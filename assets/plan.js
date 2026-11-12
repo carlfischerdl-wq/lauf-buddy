@@ -327,26 +327,48 @@ export function todaySession(text, ctx) {
   const wuTxt = "2 km einlaufen, locker auslaufen";
   const W = (blocks) => ({ warmup: { dist_m: 2000 }, cooldown: { open: true }, blocks });
 
+  // Wunsch-Erholung erkennen ("3 min Erholung", "Pause 90 s", "2:30 Trabpause") und aus dem Text entfernen,
+  // damit die Minuten nicht als Gesamtdauer gelesen werden
+  let recWish = null;
+  const recRe = [
+    /(\d+(?:\.\d+)?)\s*(min|minuten|s|sek|sekunden)\.?\s*(?:lang\s*)?(?:trab)?(?:erholung|pause|trabpause|traben|gehpause)/,
+    /(?:erholung|pause|trabpause|gehpause)\s*(?:von|:|je|jeweils|dazwischen)?\s*(\d+(?:\.\d+)?)\s*(min|minuten|s|sek|sekunden)\b/,
+    /(\d{1,2}):(\d{2})\s*(?:min\s*)?(?:trab)?(?:erholung|pause|trabpause)/,
+    /(?:erholung|pause|trabpause)\s*(?:von|:)?\s*(\d{1,2}):(\d{2})/,
+  ];
+  let tt = t;
+  const ov = extractOverrides(tt);
+  tt = ov.rest;
+  for (let k = 0; k < recRe.length && recWish == null; k++) {
+    const r = tt.match(recRe[k]);
+    if (!r) continue;
+    if (k >= 2) recWish = +r[1] * 60 + +r[2];
+    else recWish = /^min/.test(r[2]) ? parseFloat(r[1]) * 60 : parseFloat(r[1]);
+    tt = tt.replace(r[0], " ");
+  }
+
   // Zahlen aus dem Text
   let m;
-  const km = (m = t.match(/(\d+(?:\.\d+)?)\s*(?:km|kilometer)\b/)) && !/\d\s*[x×]\s*\d+(?:\.\d+)?\s*km/.test(t) ? parseFloat(m[1]) : null;
+  const km = (m = tt.match(/(\d+(?:\.\d+)?)\s*(?:km|kilometer)\b/)) && !/\d\s*[x×]\s*\d+(?:\.\d+)?\s*km/.test(tt) ? parseFloat(m[1]) : null;
   let min = null;
-  if ((m = t.match(/(\d+(?:\.\d+)?)\s*(?:h|std|stunden?)\b/))) min = parseFloat(m[1]) * 60;
-  if ((m = t.match(/(\d{1,3})\s*(?:min|minuten)\b/)) && !/\d\s*[x×]\s*\d+\s*min/.test(t)) min = (min || 0) + +m[1];
-  const rep = t.match(/(\d{1,2})\s*[x×]\s*(\d+(?:\.\d+)?)\s*(km|m|min|minuten|s|sek|sekunden)\b/);
+  if ((m = tt.match(/(\d+(?:\.\d+)?)\s*(?:h|std|stunden?)\b/))) min = parseFloat(m[1]) * 60;
+  if ((m = tt.match(/(\d{1,3})\s*(?:min|minuten)\b/)) && !/\d\s*[x×]\s*\d+\s*min/.test(tt)) min = (min || 0) + +m[1];
+  let rep = tt.match(/(\d{1,2})\s*[x×]\s*(\d+(?:\.\d+)?)\s*(km|m|min|minuten|s|sek|sekunden)\b/);
+  // ohne Einheit: "6x800" → Meter
+  if (!rep && (m = tt.match(/(\d{1,2})\s*[x×]\s*(\d{3,5})(?![\d:.])/))) rep = [m[0], m[1], m[2], "m"];
   const reps = rep ? +rep[1] : null;
   const repVal = rep ? parseFloat(rep[2]) : null;
   const repUnit = rep ? rep[3] : null;
 
   // Art des Trainings
   let kind =
-    /berg|hügel|hill/.test(t) ? "hills" :
-    /fahrtspiel|fartlek/.test(t) ? "fartlek" :
-    /steigerung/.test(t) ? "strides" :
-    /intervall|sprint|bahn|schnell|400|800|1000/.test(t) || (rep && /^(m|km)$/.test(repUnit)) ? "interval" :
-    /tempo|schwelle|zügig|threshold/.test(t) || (rep && /min/.test(repUnit)) ? "tempo" :
-    /lang|long|ausdauer/.test(t) ? "long" :
-    /locker|easy|entspannt|regener|ruhig|gemütlich|leicht/.test(t) ? "easy" : null;
+    /berg|hügel|hill/.test(tt) ? "hills" :
+    /fahrtspiel|fartlek/.test(tt) ? "fartlek" :
+    /steigerung/.test(tt) ? "strides" :
+    /intervall|sprint|bahn|schnell|400|800|1000/.test(tt) || (rep && /^(m|km)$/.test(repUnit)) ? "interval" :
+    /tempo|schwelle|zügig|threshold/.test(tt) || (rep && /min/.test(repUnit)) ? "tempo" :
+    /lang|long|ausdauer/.test(tt) ? "long" :
+    /locker|easy|entspannt|regener|ruhig|gemütlich|leicht/.test(tt) ? "easy" : null;
 
   // Kein Typ genannt → Vorschlag nach Belastung der letzten Tage
   let reason = "";
@@ -361,6 +383,7 @@ export function todaySession(text, ctx) {
     const dist = km || (min ? (min * 60) / easyMid : kind === "long" ? 12 : 6);
     s = { type: kind, title: kind === "long" ? "Langer Lauf" : "Lockerer Lauf", distanceKm: dist, paceText: `${fmtPace(E[0])}–${fmtPace(E[1])} min/km`, hrText: z2,
       desc: kind === "long" ? "Ruhig und gleichmäßig – Dauer zählt, nicht Tempo." : "Entspannt, du kannst dich dabei unterhalten.", struct: null, mPartKm: 0 };
+    if (min && !km) s.struct = { blocks: [{ reps: 1, steps: [{ p: "work", time_s: Math.round(min * 60), pace: easyPace, easy: true }] }] };
   } else if (kind === "strides") {
     const dist = km || 5;
     s = { type: "easy", title: "Locker + Steigerungen", distanceKm: dist, paceText: `${fmtPace(E[0])} min/km, Steigerungen bis ${fmtPace(paces.R)}`, hrText: z2,
@@ -369,11 +392,11 @@ export function todaySession(text, ctx) {
   } else if (kind === "hills") {
     const n = reps || 8;
     s = { type: "interval", title: "Bergsprints", distanceKm: 6, paceText: "kräftig bergauf", hrText: z5, desc: `${wuTxt}. ${n}× 20 s steil bergauf, gehend zurück.`,
-      struct: W([{ reps: n, steps: [{ p: "work", time_s: 20 }, { p: "recovery", time_s: 90 }] }]) };
+      struct: W([{ reps: n, steps: [{ p: "work", time_s: 20 }, { p: "recovery", time_s: recWish || 90 }] }]) };
   } else if (kind === "fartlek") {
     const n = reps || 8;
-    s = { type: "tempo", title: "Fahrtspiel", distanceKm: 3.5 + (n * 2 * 60) / easyMid, paceText: `zügig ≈ ${fmtPace(paces.T)} min/km`, hrText: z4, desc: `${wuTxt}. ${n}× 1 min zügig / 1 min locker.`,
-      struct: W([{ reps: n, steps: [{ p: "work", time_s: 60, pace: rng(paces.T, 10) }, { p: "recovery", time_s: 60 }] }]) };
+    s = { type: "tempo", title: "Fahrtspiel", distanceKm: 3.5 + (n * 2 * 60) / easyMid, paceText: `zügig ≈ ${fmtPace(paces.T)} min/km`, hrText: z4, desc: `${wuTxt}. ${n}× 1 min zügig / ${recWish ? `${recWish} s` : "1 min"} locker.`,
+      struct: W([{ reps: n, steps: [{ p: "work", time_s: 60, pace: rng(paces.T, 10) }, { p: "recovery", time_s: recWish || 60 }] }]) };
   } else if (kind === "tempo") {
     let n = 1, workMin;
     if (rep && /min/.test(repUnit)) { n = reps; workMin = repVal; }
@@ -382,8 +405,8 @@ export function todaySession(text, ctx) {
     else workMin = 20;
     workMin = Math.round(workMin);
     s = { type: "tempo", title: n > 1 ? "Schwellenlauf" : "Tempodauerlauf", distanceKm: 3.5 + (n * workMin * 60) / paces.T, paceText: `${fmtPace(paces.T)} min/km`, hrText: z4,
-      desc: `${wuTxt}. ${n > 1 ? `${n}× ${workMin} min` : `${workMin} min am Stück`} im Schwellentempo${n > 1 ? ", 3 min Trabpause" : ""}.`,
-      struct: W([{ reps: n, steps: n > 1 ? [{ p: "work", time_s: workMin * 60, pace: rng(paces.T) }, { p: "recovery", time_s: 180 }] : [{ p: "work", time_s: workMin * 60, pace: rng(paces.T) }] }]) };
+      desc: `${wuTxt}. ${n > 1 ? `${n}× ${workMin} min` : `${workMin} min am Stück`} im Schwellentempo${n > 1 ? `, ${recWish || 180} s Trabpause` : ""}.`,
+      struct: W([{ reps: n, steps: n > 1 ? [{ p: "work", time_s: workMin * 60, pace: rng(paces.T) }, { p: "recovery", time_s: recWish || 180 }] : [{ p: "work", time_s: workMin * 60, pace: rng(paces.T) }] }]) };
   } else {
     // Intervalle
     let n = reps || 5, dist = 1000, timeS = null;
@@ -395,10 +418,11 @@ export function todaySession(text, ctx) {
     }
     const pace = dist && dist <= 400 ? paces.R : paces.I;
     const workSec = timeS || ((dist / 1000) * pace);
-    const recSec = Math.max(60, Math.round(workSec / 15) * 15);
+    // Erholung: Wunsch aus dem Text, sonst halbe Belastungszeit (60–180 s)
+    const recSec = recWish || Math.min(180, Math.max(60, Math.round(workSec / 2 / 15) * 15));
     const work = dist ? { p: "work", dist_m: dist, pace: rng(pace) } : { p: "work", time_s: timeS, pace: rng(pace) };
     const label = dist ? `${n}× ${dist >= 1000 ? `${String(dist / 1000).replace(".", ",")} km` : `${dist} m`}` : `${n}× ${timeS >= 60 ? `${timeS / 60} min` : `${timeS} s`}`;
-    s = { type: "interval", title: "Intervalle", distanceKm: 3.5 + (n * (workSec + recSec)) / pace / 1.15, paceText: `${fmtPace(pace)} min/km`, hrText: z5,
+    s = { type: "interval", title: "Intervalle", distanceKm: 3.5 + n * (workSec / pace + recSec / (easyMid * 1.15)), paceText: `${fmtPace(pace)} min/km`, hrText: z5,
       desc: `${wuTxt}. ${label} im ${dist && dist <= 400 ? "Wiederholungs" : "Intervall"}tempo, ${recSec} s Trabpause.`,
       struct: W([{ reps: n, steps: [work, { p: "recovery", time_s: recSec }] }]) };
   }
@@ -410,5 +434,108 @@ export function todaySession(text, ctx) {
   s.dow = DOW[(today.getDay() + 6) % 7];
   s.reason = reason;
   s.request = text;
+  finalizeStruct(s, ov);
   return s;
+}
+
+// ---------- Freitext-Wünsche, die Standards überschreiben ----------
+// Standards ohne Angabe: Durchschnittstempo, Erholung mit HF-Zone-2-Warnung, Auslaufen offen.
+const toSec = (mm, ss) => +mm * 60 + +ss;
+const unitSec = (v, u) => (/^(min|minuten)$/.test(u) ? parseFloat(v) * 60 : /^(h|std|stunden?)$/.test(u) ? parseFloat(v) * 3600 : parseFloat(v));
+const unitM = (v, u) => (u === "km" ? parseFloat(v) * 1000 : parseFloat(v));
+export function extractOverrides(text) {
+  let t = text;
+  const o = {};
+  const take = (re, fn) => { const m = t.match(re); if (m) { fn(m); t = t.replace(m[0], " "); return true; } return false; };
+  const DU = "(min|minuten|s|sek|sekunden|km|m|h|std|stunden?)";
+  // Einlaufen / Aufwärmen
+  if (!take(/ohne\s*(?:ein|warm)?(?:laufen|aufwärmen|warmup|warm-up)/, () => (o.warmup = { none: true })))
+    take(new RegExp(`(\\d+(?:\\.\\d+)?)\\s*${DU}\\.?\\s*(?:einlaufen|aufwärmen|warm\\s*-?\\s*up|warmlaufen)`), (m) => (o.warmup = /km|^m$/.test(m[2]) ? { dist_m: unitM(m[1], m[2]) } : { time_s: unitSec(m[1], m[2]) })) ||
+    take(new RegExp(`(?:einlaufen|aufwärmen|warm\\s*-?\\s*up)\\s*(?:von|:)?\\s*(\\d+(?:\\.\\d+)?)\\s*${DU}`), (m) => (o.warmup = /km|^m$/.test(m[2]) ? { dist_m: unitM(m[1], m[2]) } : { time_s: unitSec(m[1], m[2]) }));
+  // Auslaufen / Cool-down
+  if (!take(/ohne\s*(?:aus)?(?:laufen|auslaufen|cool\s*-?\s*down)/, () => (o.cooldown = { none: true })))
+    take(new RegExp(`(\\d+(?:\\.\\d+)?)\\s*${DU}\\.?\\s*(?:auslaufen|cool\\s*-?\\s*down|austraben)`), (m) => (o.cooldown = /km|^m$/.test(m[2]) ? { dist_m: unitM(m[1], m[2]) } : { time_s: unitSec(m[1], m[2]) })) ||
+    take(new RegExp(`(?:auslaufen|cool\\s*-?\\s*down)\\s*(?:von|:)?\\s*(\\d+(?:\\.\\d+)?)\\s*${DU}`), (m) => (o.cooldown = /km|^m$/.test(m[2]) ? { dist_m: unitM(m[1], m[2]) } : { time_s: unitSec(m[1], m[2]) }));
+  // HF: "ohne HF" → keine Warnung in der Erholung; "Zone X" je nach Umfeld für Erholung oder Belastung
+  take(/ohne\s*(?:hf|puls|herzfrequenz)(?:\s*-?\s*(?:warnung|alarm|zone))?/, () => (o.recZone = null));
+  for (let guard = 0; guard < 3; guard++) {
+    const m = t.match(/(?:hf|puls|herzfrequenz)?\s*-?\s*(?:zone|bereich)\s*(\d)/);
+    if (!m) break;
+    const before = t.slice(Math.max(0, m.index - 25), m.index);
+    const after = t.slice(m.index + m[0].length, m.index + m[0].length + 20);
+    if (/erholung|pause|trab/.test(before) || /^\s*(?:in|für|bei)\s*(?:der\s*)?(?:erholung|pause)/.test(after)) o.recZone = +m[1];
+    else o.workZone = +m[1];
+    t = t.slice(0, m.index) + " " + t.slice(m.index + m[0].length);
+  }
+  // Tempo: Messart
+  if (/aktuell(?:es|em|en)?\s*(?:tempo|pace)/.test(t)) { o.metric = "current"; t = t.replace(/aktuell(?:es|em|en)?\s*(?:tempo|pace)/, " "); }
+  else if (/durchschnitt/.test(t)) { o.metric = "average"; t = t.replace(/durchschnitt\w*/, " "); }
+  // Korridorbreite
+  take(/(?:±|\+\/-|plus\s*minus)\s*(\d+)\s*(?:s|sek|sekunden)\b/, (m) => (o.width = 2 * +m[1])) ||
+    take(/(?:korridor|spanne|toleranz|bereich)\s*(?:von)?\s*(\d+)\s*(?:s|sek|sekunden)\b/, (m) => (o.width = +m[1])) ||
+    take(/(\d+)\s*(?:s|sek|sekunden)\s*(?:korridor|spanne|toleranz)/, (m) => (o.width = +m[1]));
+  // Tempo: Bereich "4:30-4:40" oder Einzelwert "in 4:30", "@4:30", "4:30er", "4:30 min/km"
+  take(/(\d{1,2}):(\d{2})\s*(?:-|–|bis)\s*(\d{1,2}):(\d{2})\s*(?:min\/km|\/km|er|min)?/, (m) => {
+    const a = toSec(m[1], m[2]), b = toSec(m[3], m[4]); o.paceRange = [Math.min(a, b), Math.max(a, b)];
+  }) ||
+    take(/(?:@|in|im|mit|bei|pace|tempo|schnitt|à|a)\s*(\d{1,2}):(\d{2})\s*(?:min\/km|\/km|er|min|pace)?/, (m) => (o.pace = toSec(m[1], m[2]))) ||
+    take(/(\d{1,2}):(\d{2})\s*(?:min\/km|\/km|er\s*(?:pace|tempo|schnitt)?|pace)/, (m) => (o.pace = toSec(m[1], m[2])));
+  o.rest = t;
+  return o;
+}
+
+// Macht aus jeder Einheit eine vollständige, explizite Struktur und wendet Wünsche an
+export function finalizeStruct(s, ov = {}) {
+  let st = s.struct;
+  if (!st) {
+    const steps = s.mPartKm
+      ? [{ p: "work", dist_m: Math.round((s.distanceKm - s.mPartKm) * 1000), pace: s.easyPace, easy: true }, { p: "work", dist_m: s.mPartKm * 1000, pace: [s.mPace, s.mPace] }]
+      : [{ p: "work", dist_m: Math.round(s.distanceKm * 1000), pace: s.easyPace, easy: true }];
+    st = { blocks: [{ reps: 1, steps }] };
+  }
+  st = JSON.parse(JSON.stringify(st));
+  const easyMid = s.easyPace ? (s.easyPace[0] + s.easyPace[1]) / 2 : 420;
+  // Einlaufen: Standard = Zeit in Sekunden
+  if (ov.warmup) st.warmup = ov.warmup.none ? null : ov.warmup;
+  else if (st.warmup?.dist_m) st.warmup = { time_s: Math.round(((st.warmup.dist_m / 1000) * easyMid) / 30) * 30 };
+  // Auslaufen: Standard = offen (nur bei Einheiten mit Einlaufen/Intervallen)
+  if (ov.cooldown) st.cooldown = ov.cooldown.none ? null : ov.cooldown;
+  else if (st.cooldown || st.warmup) st.cooldown = { open: true };
+  for (const b of st.blocks) for (const x of b.steps) {
+    if (x.p === "recovery") {
+      x.hrZone = ov.recZone !== undefined ? ov.recZone : 2;
+      continue;
+    }
+    if (ov.workZone && (x.pace || !x.easy)) { x.hrZone = ov.workZone; delete x.pace; continue; }
+    if (!x.pace) continue;
+    const w = ov.width || (x.easy ? 20 : 10);
+    let lo, hi;
+    if (ov.paceRange && !(x.easy && b.steps.length > 1 && st.blocks.length > 1)) [lo, hi] = ov.paceRange;
+    else {
+      const mid = ov.pace && !(x.easy && st.blocks.length > 1) ? ov.pace : (x.pace[0] + x.pace[1]) / 2;
+      lo = Math.round(mid - w / 2); hi = Math.round(mid + w / 2);
+    }
+    x.pace = [lo, hi];
+    x.exact = true;
+    x.metric = ov.metric || "average";
+  }
+  st.final = true;
+  s.struct = st;
+  return s;
+}
+
+// Lesbare Beschreibung des Ablaufs (für die Website)
+export function describeStruct(st) {
+  const fmtT = (sec) => (sec >= 60 ? `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, "0")} min` : `${sec} s`);
+  const goal = (x) => (x?.dist_m ? (x.dist_m >= 1000 ? `${String(x.dist_m / 1000).replace(".", ",")} km` : `${x.dist_m} m`) : x?.time_s ? fmtT(x.time_s) : "offen");
+  const lines = [];
+  if (st.warmup) lines.push(`Einlaufen: ${goal(st.warmup)}`);
+  for (const b of st.blocks) {
+    const parts = b.steps.map((x) => x.p === "recovery"
+      ? `Erholung ${goal(x)}${x.hrZone ? ` (HF-Zone ${x.hrZone})` : ""}`
+      : `${goal(x)}${x.hrZone ? ` in HF-Zone ${x.hrZone}` : x.pace ? ` @ ${fmtPace(x.pace[0])}–${fmtPace(x.pace[1])} /km (${x.metric === "current" ? "aktuelles" : "Ø"} Tempo)` : ""}`);
+    lines.push(b.reps > 1 ? `${b.reps}× ( ${parts.join(" + ")} )` : parts.join(" + "));
+  }
+  if (st.cooldown) lines.push(`Auslaufen: ${st.cooldown.open ? "offen" : goal(st.cooldown)}`);
+  return lines;
 }

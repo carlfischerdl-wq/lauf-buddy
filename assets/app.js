@@ -30,7 +30,8 @@ async function load() {
     S.demo = true;
   }
   S.index = idx;
-  S.profile = A.buildProfile(S.config, store.get("profil", {}), idx.workouts);
+  S.health = await getJson("data/health.json").catch(() => null);
+  S.profile = A.buildProfile(S.config, store.get("profil", {}), idx.workouts, S.health);
   document.getElementById("demo-banner").hidden = !S.demo;
   const ls = idx.lastSync ? `Sync ${fmtDate(idx.lastSync, { day: "numeric", month: "short" })}, ${fmtTime(idx.lastSync)}` : "";
   document.getElementById("sync").textContent = ls;
@@ -430,11 +431,76 @@ function planHtml(plan) {
 function todayHtml(s) {
   return `<div class="sess today" style="margin:14px -16px -16px;border-radius:0 0 var(--radius) var(--radius)">
     <div class="d">Heute</div>
-    <div><div class="title">${esc(s.title)}</div><div class="small muted">${esc(s.paceText)} · ${esc(s.hrText)}</div></div>
+    <div><div class="title">${esc(s.title)}</div><div class="small muted">${esc(s.hrText)}</div></div>
     <div class="small" style="text-align:right;white-space:nowrap"><b>${num(s.distanceKm, s.distanceKm % 1 ? 1 : 0)} km</b><br><span class="muted">~${s.durationMin} min</span></div>
-    <div class="desc">${esc(s.desc)}${s.reason ? `<br><i>${esc(s.reason)}</i>` : ""}</div>
+    <div class="desc" id="today-steps">${structListHtml(s.struct)}${s.reason ? `<i>${esc(s.reason)}</i>` : ""}</div>
     <div class="desc"><button class="btn small" id="today-watch-btn">⌚ Auf die Apple Watch</button></div>
+    <details class="desc editor"><summary class="small" style="cursor:pointer;color:var(--accent);font-weight:600;padding:6px 0">✏️ Training anpassen</summary>${editorHtml(s.struct)}</details>
   </div>`;
+}
+const structListHtml = (st) => (st ? `<ul style="margin:4px 0 6px;padding-left:18px">${P.describeStruct(st).map((l) => `<li>${esc(l)}</li>`).join("")}</ul>` : "");
+
+// ---------- Editor: jeden Wert des Trainings ändern ----------
+const mmss = (sec) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, "0")}`;
+const parseMmss = (v) => { const m = String(v).trim().match(/^(\d{1,2}):(\d{2})$/); return m ? +m[1] * 60 + +m[2] : null; };
+function goalFields(x, key, allowOpen, allowNone) {
+  const type = !x ? "none" : x.open ? "open" : x.dist_m ? "dist" : x.time_s ? "time" : "open";
+  const val = x?.dist_m ?? x?.time_s ?? "";
+  const opts = [["time", "Zeit (s)"], ["dist", "Strecke (m)"], ...(allowOpen ? [["open", "offen"]] : []), ...(allowNone ? [["none", "keins"]] : [])];
+  return `<select data-k="${key}-type">${opts.map(([v, l]) => `<option value="${v}" ${v === type ? "selected" : ""}>${l}</option>`).join("")}</select>
+    <input data-k="${key}-val" type="number" inputmode="numeric" value="${val}" ${type === "open" || type === "none" ? "disabled" : ""}>`;
+}
+const zoneSel = (key, z, withNone) => `<select data-k="${key}">${withNone ? `<option value="" ${!z ? "selected" : ""}>keine</option>` : ""}${[1, 2, 3, 4, 5].map((n) => `<option value="${n}" ${+z === n ? "selected" : ""}>Zone ${n}</option>`).join("")}</select>`;
+function editorHtml(st) {
+  if (!st) return "";
+  const row = (label, inner) => `<div class="ed-row"><label>${label}</label><div class="ed-in">${inner}</div></div>`;
+  let h = `<div class="ed">`;
+  h += row("Einlaufen", goalFields(st.warmup, "wu", false, true));
+  st.blocks.forEach((b, bi) => {
+    h += `<div class="ed-block">${row(`Block ${bi + 1}: Wiederholungen`, `<input data-k="b${bi}-reps" type="number" inputmode="numeric" min="1" value="${b.reps}">`)}`;
+    b.steps.forEach((x, si) => {
+      const k = `b${bi}s${si}`;
+      if (x.p === "recovery") {
+        h += row("Erholung", goalFields(x, k, true, false)) + row("Erholung: HF-Warnung", zoneSel(`${k}-zone`, x.hrZone, true));
+      } else {
+        const mode = x.hrZone ? "zone" : x.pace ? "pace" : "none";
+        h += row("Belastung", goalFields(x, k, true, false));
+        h += row("Belastung: Warnung", `<select data-k="${k}-mode"><option value="pace" ${mode === "pace" ? "selected" : ""}>Tempo-Korridor</option><option value="zone" ${mode === "zone" ? "selected" : ""}>HF-Zone</option><option value="none" ${mode === "none" ? "selected" : ""}>keine</option></select>`);
+        h += row("Tempo von–bis (min/km)", `<input data-k="${k}-pf" value="${x.pace ? mmss(x.pace[0]) : ""}" placeholder="4:30"><input data-k="${k}-ps" value="${x.pace ? mmss(x.pace[1]) : ""}" placeholder="4:40">
+          <select data-k="${k}-metric"><option value="average" ${x.metric !== "current" ? "selected" : ""}>Ø</option><option value="current" ${x.metric === "current" ? "selected" : ""}>aktuell</option></select>`);
+        h += row("HF-Zone (falls gewählt)", zoneSel(`${k}-zone`, x.hrZone || 4, false));
+      }
+    });
+    h += `</div>`;
+  });
+  h += row("Auslaufen", goalFields(st.cooldown, "cd", true, true));
+  return h + `</div>`;
+}
+function readEditor(root, st) {
+  const v = (k) => root.querySelector(`[data-k="${k}"]`)?.value;
+  const goal = (k) => { const t = v(`${k}-type`), n = Math.max(1, Math.round(+v(`${k}-val`) || 0)); return t === "none" ? null : t === "open" ? { open: true } : t === "dist" ? { dist_m: n } : { time_s: n }; };
+  const out = JSON.parse(JSON.stringify(st));
+  out.warmup = goal("wu");
+  out.cooldown = goal("cd");
+  out.blocks.forEach((b, bi) => {
+    b.reps = Math.max(1, Math.round(+v(`b${bi}-reps`) || 1));
+    b.steps = b.steps.map((x, si) => {
+      const k = `b${bi}s${si}`;
+      const g = goal(k) || { open: true };
+      const n = { p: x.p, ...(g.open ? {} : g), easy: x.easy };
+      if (x.p === "recovery") { n.hrZone = v(`${k}-zone`) ? +v(`${k}-zone`) : null; return n; }
+      const mode = v(`${k}-mode`);
+      if (mode === "zone") n.hrZone = +v(`${k}-zone`);
+      else if (mode === "pace") {
+        const a = parseMmss(v(`${k}-pf`)), c = parseMmss(v(`${k}-ps`));
+        if (a && c) { n.pace = [Math.min(a, c), Math.max(a, c)]; n.exact = true; n.metric = v(`${k}-metric`); }
+        else if (x.pace) { n.pace = x.pace; n.exact = true; n.metric = v(`${k}-metric`); }
+      }
+      return n;
+    });
+  });
+  out.final = true;
+  return out;
 }
 
 function viewGoal() {
@@ -479,6 +545,18 @@ function viewGoal() {
   const bindToday = () => {
     const b = document.getElementById("today-watch-btn");
     if (b) b.onclick = () => watchExport(store.get("todaySession"), b);
+    const ed = $app.querySelector(".editor");
+    if (ed) ed.addEventListener("change", (e) => {
+      const sess = store.get("todaySession");
+      // Felder "offen/keins" sperren das Zahlenfeld
+      if (e.target.dataset.k?.endsWith("-type")) {
+        const inp = ed.querySelector(`[data-k="${e.target.dataset.k.replace("-type", "-val")}"]`);
+        if (inp) inp.disabled = ["open", "none"].includes(e.target.value);
+      }
+      sess.struct = readEditor(ed, sess.struct);
+      store.set("todaySession", sess);
+      document.getElementById("today-steps").innerHTML = structListHtml(sess.struct);
+    });
   };
   bindToday();
   document.getElementById("today-make").onclick = () => {
@@ -497,31 +575,25 @@ function viewGoal() {
 }
 
 function viewSettings() {
-  const o = store.get("profil", {});
   const p = S.profile;
-  const zb = A.zoneBounds(p);
+  const z = p.zones;
+  const rows = [
+    ["Bereich 1", `< ${z[0] - 1}`], ["Bereich 2", `${z[0]}–${z[1] - 1}`], ["Bereich 3", `${z[1]}–${z[2] - 1}`],
+    ["Bereich 4", `${z[2]}–${z[3] - 1}`], ["Bereich 5", `${z[3]}+`],
+  ];
+  const latest = Object.entries(S.health?.resting || {}).sort().pop();
   $app.innerHTML = `
-    <h1>Profil</h1>
+    <h1>Profil${p.name ? ` · ${esc(p.name)}` : ""}</h1>
     <section class="card">
-      <h2>Deine Werte</h2>
-      <p class="small muted" style="margin-top:0">Je genauer, desto besser die Pulszonen und Noten. Wird nur in diesem Browser gespeichert.</p>
-      <div class="form2">
-        <div><label>Name</label><input id="p-name" value="${esc(o.name ?? S.config.name ?? "")}"></div>
-        <div><label>Geburtsjahr</label><input id="p-year" type="number" inputmode="numeric" value="${o.geburtsjahr ?? S.config.geburtsjahr ?? ""}" placeholder="z. B. 2003"></div>
-        <div><label>Max. Puls (falls bekannt)</label><input id="p-max" type="number" inputmode="numeric" value="${o.maxHF ?? ""}" placeholder="${p.maxHr}"></div>
-        <div><label>Ruhepuls (morgens)</label><input id="p-rest" type="number" inputmode="numeric" value="${o.ruheHF ?? ""}" placeholder="${p.restHr}"></div>
+      <h2>Herzfrequenz</h2>
+      <p class="small muted" style="margin-top:0">Wie in der Watch-App: automatisch nach der Herzfrequenzreserve-Methode, Ruhe- und Maximalwert werden am 1. jedes Monats aktualisiert.</p>
+      <div class="hr-list">
+        <div><span>Ruhe</span><b>${p.restHr} BPM</b></div>
+        <div><span>Maximum</span><b>${p.maxHr} BPM</b></div>
       </div>
-      <h3>Pulszonen deiner Apple Watch</h3>
-      <p class="small muted" style="margin:0">Damit Website und Watch dieselben Zonen nutzen: In der <b>Watch-App auf dem iPhone → Training → Herzfrequenzzonen</b> nachsehen und hier jeweils den <b>unteren Wert</b> der Zonen 2–5 eintragen. Leer lassen = automatische Berechnung.</p>
-      <div class="form2">
-        ${[2, 3, 4, 5].map((z, i) => `<div><label>Zone ${z} ab (bpm)</label><input id="p-z${z}" type="number" inputmode="numeric" value="${(o.zonen || [])[i] ?? ""}" placeholder="${A.hrAt([0.6, 0.7, 0.8, 0.9][i], p)}"></div>`).join("")}
-      </div>
-      <div class="actions"><button class="btn" id="save">Speichern</button></div>
-      ${o.zonen && !p.zones ? `<div class="notice" style="--c:var(--warning)">⚠︎ Die Zonenwerte sind unvollständig oder nicht aufsteigend – es wird weiter automatisch gerechnet.</div>` : ""}
-      <p class="small muted">Aktuell: ${p.zones ? "Zonen von deiner Apple Watch" : "Zonen automatisch berechnet"} · Max-HF ${p.maxHr} (${p.maxHrSource}), Ruhe-HF ${p.restHr} (${p.restHrSource}). Tipp: Den Ruhepuls zeigt die Apple Watch in der Health-App.</p>
-    </section>
-    <section class="card"><h2>Deine Pulszonen</h2>
-      <table class="paces">${zb.map((z, i) => `<tr><td><span class="legend"><span style="--c:var(--z${i + 1})">${z.label}</span></span></td><td>${z.hrFrom}–${z.hrTo} bpm</td></tr>`).join("")}</table>
+      <h3 style="margin:18px 0 6px">Herzfrequenzbereiche</h3>
+      <div class="hr-list">${rows.map(([l, v], i) => `<div><span><i class="zdot" style="--c:var(--z${i + 1})"></i>${l}</span><b>${v}</b></div>`).join("")}</div>
+      <p class="small muted">Quelle: Ruhe ${esc(p.restHrSource)}, Maximum ${esc(p.maxHrSource)}.${latest ? ` Letzter Ruhepuls aus Health: ${latest[1]} BPM (${fmtDate(latest[0])}).` : ""} Diese Zonen gelten überall auf der Website und im Watch-Export.</p>
     </section>
     <section class="card"><h2>Wie die Note entsteht</h2>
       <p class="small" style="margin-top:0;line-height:1.5">Jeder Lauf bekommt fünf Teilnoten: <b>Intensität passend</b> (30 %, passt der Puls zum Trainingsziel?), <b>Effizienz</b> (25 %, Tempo pro Herzschlag im Vergleich zu deinen letzten 6 Wochen), <b>Belastungssteuerung</b> (20 %, die letzten 7 Tage im Vergleich zu den letzten 4 Wochen), <b>Gleichmäßigkeit</b> (15 %, Puls-Drift bzw. gleichmäßige Intervalle) und <b>Umfang</b> (10 %, wie geplant bzw. wie üblich). Wenn du einen Plan hast, wird jeder Lauf an der geplanten Einheit gemessen.</p>
@@ -529,17 +601,6 @@ function viewSettings() {
     <section class="card"><h2>Daten</h2>
       <p class="small" style="margin-top:0">${S.demo ? "Es werden gerade Demo-Daten angezeigt – sie verschwinden mit deinem ersten echten Lauf." : `${S.index.workouts.length} Trainings gespeichert.`} ${S.index.lastSync ? `Zuletzt aktualisiert: ${fmtDate(S.index.lastSync)} ${fmtTime(S.index.lastSync)}.` : ""}</p>
     </section>`;
-  document.getElementById("save").onclick = () => {
-    store.set("profil", {
-      name: document.getElementById("p-name").value.trim(),
-      geburtsjahr: document.getElementById("p-year").value,
-      maxHF: document.getElementById("p-max").value,
-      ruheHF: document.getElementById("p-rest").value,
-      zonen: [2, 3, 4, 5].map((z) => document.getElementById("p-z" + z).value).some((v) => v) ? [2, 3, 4, 5].map((z) => Number(document.getElementById("p-z" + z).value)) : null,
-    });
-    S.profile = A.buildProfile(S.config, store.get("profil", {}), S.index.workouts);
-    viewSettings();
-  };
 }
 
 // ---------- Routing ----------

@@ -1,26 +1,24 @@
 // Wandelt eine Plan-Einheit in eine Apple-Watch-Trainingsdatei (.workout) um.
 // Nutzt die MIT-lizenzierte Bibliothek @bibixx/workoutkit (assets/vendor/workoutkit.js).
+// Standards (wenn nichts anderes gewünscht): Tempo als Durchschnittstempo, Erholung mit
+// HF-Zone-2-Warnung, Aufwärmen als Zeit in Sekunden, Auslaufen offen.
 import {
   WorkoutPlan, Step, Distance, Duration, DistanceGoal, TimeGoal, OpenGoal,
   Speed, SpeedRangeAlert, HeartRateZoneAlert, toBlob,
 } from "./vendor/workoutkit.js";
+import { finalizeStruct } from "./plan.js";
 
-// Tempo-Korridor um die Mitte des Zielbereichs, gemessen am DURCHSCHNITTSTEMPO.
-// Breite: 20 s bei Dauerläufen, 10 s bei Intervallen/Tempo.
-function paceAlert(pace, width) {
-  if (!pace) return undefined;
-  const mid = (pace[0] + pace[1]) / 2;
-  const fast = Math.round(mid - width / 2), slow = Math.round(mid + width / 2);
-  const km = new Distance(1, "kilometers");
-  return new SpeedRangeAlert(new Speed(km, new Duration(slow, "seconds")), new Speed(km, new Duration(fast, "seconds")), "average");
+const km1 = () => new Distance(1, "kilometers");
+function paceAlert(x) {
+  if (!x.pace) return undefined;
+  const [fast, slow] = x.pace;
+  return new SpeedRangeAlert(new Speed(km1(), new Duration(Math.round(slow), "seconds")), new Speed(km1(), new Duration(Math.round(fast), "seconds")), x.metric || "average");
 }
 function goalOf(x) {
   if (x?.dist_m) return x.dist_m % 1000 === 0 ? new DistanceGoal(new Distance(x.dist_m / 1000, "kilometers")) : new DistanceGoal(new Distance(x.dist_m, "meters"));
-  if (x?.time_s) return x.time_s % 60 === 0 ? new TimeGoal(new Duration(x.time_s / 60, "minutes")) : new TimeGoal(new Duration(x.time_s, "seconds"));
+  if (x?.time_s) return new TimeGoal(new Duration(Math.round(x.time_s), "seconds")); // Zeiten immer in Sekunden
   return new OpenGoal();
 }
-// Zeiten immer in Sekunden (Aufwärmen, Erholung)
-const secondsGoal = (sec) => new TimeGoal(new Duration(Math.round(sec), "seconds"));
 
 export function buildWorkoutPlan(s) {
   const plan = new WorkoutPlan({ referenceId: crypto.randomUUID() });
@@ -32,36 +30,19 @@ export function buildWorkoutPlan(s) {
     return plan;
   }
 
+  // Plan-Einheiten haben noch keine vollständige Struktur → mit Standards ergänzen
+  const st = s.struct?.final ? s.struct : finalizeStruct({ ...s }).struct;
+
   const custom = plan.asCustom({ activity: "running", location: "outdoor", displayName: name.slice(0, 60) });
-  let struct = s.struct;
-  if (!struct) {
-    // Lockerer / langer Lauf: eine Strecke im Grundlagentempo, ggf. mit Renntempo-Teil am Ende
-    const total = Math.round(s.distanceKm * 1000);
-    const steps = s.mPartKm
-      ? [{ p: "work", dist_m: total - s.mPartKm * 1000, pace: s.easyPace, easy: true }, { p: "work", dist_m: s.mPartKm * 1000, pace: [s.mPace, s.mPace] }]
-      : [{ p: "work", dist_m: total, pace: s.easyPace, easy: true }];
-    struct = { blocks: [{ reps: 1, steps }] };
-  }
-  // Aufwärmen als Zeit in Sekunden (Strecke × lockeres Tempo, auf 30 s gerundet)
-  const easyMid = s.easyPace ? (s.easyPace[0] + s.easyPace[1]) / 2 : 420;
-  if (struct.warmup) {
-    const sec = struct.warmup.time_s || Math.round(((struct.warmup.dist_m / 1000) * easyMid) / 30) * 30;
-    custom.warmup = new Step(secondsGoal(sec));
-  }
-  for (const b of struct.blocks) {
+  if (st.warmup) custom.warmup = new Step(goalOf(st.warmup));
+  for (const b of st.blocks) {
     const block = custom.addBlock(b.reps);
-    for (const st of b.steps) {
-      if (st.p === "recovery") {
-        // Erholung: Zeit in Sekunden + Herzfrequenz-Zone 2
-        const sec = st.time_s || Math.round(((st.dist_m || 400) / 1000) * easyMid);
-        block.addStep("recovery", secondsGoal(sec), undefined, new HeartRateZoneAlert(2));
-      } else {
-        block.addStep("work", goalOf(st), undefined, paceAlert(st.pace, st.easy ? 20 : 10));
-      }
+    for (const x of b.steps) {
+      const alert = x.hrZone ? new HeartRateZoneAlert(x.hrZone) : x.p === "work" ? paceAlert(x) : undefined;
+      block.addStep(x.p, goalOf(x), undefined, alert);
     }
   }
-  // Auslaufen: offen (ohne Ziel) – du beendest es selbst
-  if (struct.cooldown) custom.cooldown = new Step(new OpenGoal());
+  if (st.cooldown) custom.cooldown = new Step(st.cooldown.open ? new OpenGoal() : goalOf(st.cooldown));
   return plan;
 }
 

@@ -125,3 +125,18 @@ table.paces td:last-child { text-align: right; font-weight: 600; }
 .tabs { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 10; }
 .tabs a { flex: 1; max-width: 190px; text-align: center; padding: 14px 4px; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; }
 .tabs a.active { color: var(--accent); }
+
+/* Trainings-Editor */
+.ed { display: grid; gap: 8px; margin-top: 8px; }
+.ed-block { border-left: 3px solid var(--accent); padding-left: 10px; display: grid; gap: 8px; }
+.ed-row label { margin: 0 0 3px; font-size: 12px; }
+.ed-in { display: flex; gap: 6px; }
+.ed-in select, .ed-in input { padding: 7px 9px; font-size: 15px; border-radius: 8px; }
+.ed-in input[disabled] { opacity: .4; }
+
+/* Profil: Liste wie in der Watch-App */
+.hr-list { border-radius: 14px; background: var(--bg); overflow: hidden; }
+.hr-list > div { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; font-size: 16px; }
+.hr-list > div + div { border-top: 1px solid var(--line, rgba(127,127,127,.2)); }
+.hr-list b { font-variant-numeric: tabular-nums; font-weight: 600; }
+.zdot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--c); margin-right: 8px; }

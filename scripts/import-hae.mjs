@@ -116,10 +116,24 @@ export function normalizeHae(w) {
 
 // Sucht hochgeladene Exporte: data/upload.json (fester Name), data/inbox/*.json
 // und data/inbox, falls versehentlich als Datei statt Ordner angelegt.
+const HEALTH = path.join(DATA, "health.json");
+// HAE-Gesundheitsmetriken: Ruheherzfrequenz pro Tag übernehmen
+function mergeMetrics(health, metrics) {
+  let n = 0;
+  for (const m of metrics) {
+    if (!/resting_heart_rate|ruheherz/i.test(m.name || "")) continue;
+    for (const d of m.data || []) {
+      const v = Number(d.qty ?? d.Avg ?? d.avg);
+      const day = String(d.date || "").slice(0, 10);
+      if (v > 30 && /^\d{4}-\d{2}-\d{2}$/.test(day)) { health.resting[day] = Math.round(v); n++; }
+    }
+  }
+  return n;
+}
+
 async function findUploads() {
   const out = [];
-  const up = path.join(DATA, "upload.json");
-  if (existsSync(up)) out.push(up);
+  for (const f of await readdir(DATA)) if (/^upload.*\.json$/i.test(f)) out.push(path.join(DATA, f));
   if (existsSync(INBOX)) {
     if ((await stat(INBOX)).isDirectory()) {
       for (const f of await readdir(INBOX)) if (f.toLowerCase().endsWith(".json")) out.push(path.join(INBOX, f));
@@ -135,13 +149,16 @@ async function main() {
   const known = new Set(index.workouts.map((w) => w.id));
   const knownStarts = new Set(index.workouts.map((w) => w.start));
   await mkdir(WORKOUTS, { recursive: true });
-  let added = 0;
+  let added = 0, healthAdded = 0;
+  const health = existsSync(HEALTH) ? JSON.parse(await readFile(HEALTH, "utf8")) : { resting: {} };
 
   for (const file of files) {
     const f = path.basename(file);
     try {
       const raw = JSON.parse(await readFile(file, "utf8"));
-      const list = raw?.data?.workouts ?? raw?.workouts ?? (Array.isArray(raw) ? raw : [raw]);
+      const metrics = raw?.data?.metrics ?? raw?.metrics;
+      if (Array.isArray(metrics)) healthAdded += mergeMetrics(health, metrics);
+      const list = raw?.data?.workouts ?? raw?.workouts ?? (metrics ? [] : Array.isArray(raw) ? raw : [raw]);
       for (const w of list) {
         const n = normalizeHae(w);
         if (!n || n.durationSec < 120) continue;
@@ -158,6 +175,7 @@ async function main() {
       console.error(`Datei ${f} konnte nicht gelesen werden: ${e.message}`);
     }
   }
+  if (healthAdded) { await writeFile(HEALTH, JSON.stringify(health, null, 1)); console.log(`Ruhepuls: ${healthAdded} Tage aktualisiert.`); }
   index.workouts.sort((a, b) => Date.parse(b.start) - Date.parse(a.start));
   index.lastSync = new Date().toISOString();
   await writeFile(INDEX, JSON.stringify(index, null, 1));

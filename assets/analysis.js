@@ -45,24 +45,33 @@ export function localDayKey(d) {
 }
 
 // ---------- Profil & Pulszonen ----------
-export function buildProfile(config = {}, overrides = {}, workouts = []) {
-  const c = { ...config, ...Object.fromEntries(Object.entries(overrides).filter(([, v]) => v !== "" && v != null)) };
-  const year = Number(c.geburtsjahr) || null;
-  const age = year ? new Date().getFullYear() - year : null;
-  const observedMax = Math.max(0, ...workouts.filter((w) => Date.now() - Date.parse(w.start) < 365 * DAY).map((w) => w.maxHr || 0));
-  let maxHr = Number(c.maxHF) || null;
-  let maxHrSource = "eingetragen";
-  if (!maxHr) {
-    const est = age ? Math.round(208 - 0.7 * age) : 195;
-    maxHr = Math.max(est, observedMax || 0);
-    maxHrSource = observedMax >= est ? "höchster gemessener Wert" : age ? "geschätzt aus Alter" : "Standardwert (Alter eintragen!)";
-  }
-  const restHr = Number(c.ruheHF) || 60;
-  // Pulszonen der Apple Watch: Untergrenzen von Zone 2, 3, 4, 5 in bpm
-  let zones = Array.isArray(c.zonen) ? c.zonen.map(Number) : null;
-  if (!zones || zones.length !== 4 || zones.some((z, i) => !(z > 40) || (i && z <= zones[i - 1]))) zones = null;
-  if (zones && zones[3] >= maxHr) maxHr = zones[3] + 10;
-  return { name: c.name || "", age, maxHr, restHr, zones, maxHrSource, restHrSource: Number(c.ruheHF) ? "eingetragen" : "Standardwert" };
+// Apple Watch „Automatisch“: Herzfrequenzreserve-Methode.
+// Untergrenzen Zone 2–5 = aufgerundet Ruhe + 59/69/79/89 % der Reserve
+// (nachgerechnet an Carls Watch: Ruhe 62, Max 192 → 139 / 152 / 165 / 178).
+export function appleZones(rest, max) {
+  return [0.59, 0.69, 0.79, 0.89].map((f) => Math.ceil(rest + f * (max - rest) - 1e-9));
+}
+// Ruhepuls wie die Watch: am 1. jedes Monats neu – hier: Mittel des Vormonats aus Apple Health
+export function restFromHealth(health, stand) {
+  const days = health?.resting || {};
+  const now = new Date();
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const key = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
+  if (stand && key < stand) return null; // Watch-Wert ist aktueller
+  const vals = Object.entries(days).filter(([d]) => d.startsWith(key)).map(([, v]) => +v).filter((v) => v > 30);
+  return vals.length >= 7 ? { value: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), month: key, n: vals.length } : null;
+}
+export function buildProfile(config = {}, overrides = {}, workouts = [], health = null) {
+  const w = config.watch || {};
+  const fromHealth = restFromHealth(health, w.stand);
+  const restHr = fromHealth?.value || Number(w.ruheHF) || Number(config.ruheHF) || 60;
+  const maxHr = Number(w.maxHF) || Number(config.maxHF) || 195;
+  return {
+    name: overrides.name || config.name || "", maxHr, restHr,
+    zones: appleZones(restHr, maxHr),
+    restHrSource: fromHealth ? `Apple Health, Ø ${fromHealth.month}` : "Apple Watch",
+    maxHrSource: "Apple Watch",
+  };
 }
 
 export const ZONES = [

@@ -1,6 +1,8 @@
 {
   "name": "Carl",
-  "geburtsjahr": null,
-  "maxHF": null,
-  "ruheHF": null
+  "watch": {
+    "ruheHF": 62,
+    "maxHF": 192,
+    "stand": "2026-11"
+  }
 }
