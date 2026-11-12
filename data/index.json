@@ -1,4 +1,56 @@
 {
- "lastSync": null,
- "workouts": []
+ "lastSync": "2026-11-12T12:02:07.094Z",
+ "workouts": [
+  {
+   "id": "5DA4E0EB-761A-4E0F-A803-4A18212DF8B2",
+   "source": "health-auto-export",
+   "name": "Outdoor Laufen",
+   "type": "Outdoor Laufen",
+   "start": "2026-11-10T12:27:58.000Z",
+   "startLocal": "2026-11-10T12:27:58.000Z",
+   "durationSec": 2651,
+   "elapsedSec": 2651,
+   "distanceM": 6613,
+   "elevationGainM": null,
+   "avgHr": 167.7,
+   "maxHr": 203,
+   "avgCadence": null,
+   "calories": 595,
+   "hasStreams": true
+  },
+  {
+   "id": "DE57362D-DE4C-42C7-8E51-4EA04A03CEF5",
+   "source": "health-auto-export",
+   "name": "Outdoor Laufen",
+   "type": "Outdoor Laufen",
+   "start": "2026-11-09T18:20:57.000Z",
+   "startLocal": "2026-11-09T18:20:57.000Z",
+   "durationSec": 3565,
+   "elapsedSec": 3565,
+   "distanceM": 8051,
+   "elevationGainM": 27,
+   "avgHr": 149.4,
+   "maxHr": 161,
+   "avgCadence": null,
+   "calories": 829,
+   "hasStreams": true
+  },
+  {
+   "id": "94A072F5-F28E-4338-96E1-790E900B5957",
+   "source": "health-auto-export",
+   "name": "Outdoor Laufen",
+   "type": "Outdoor Laufen",
+   "start": "2026-11-08T14:08:21.000Z",
+   "startLocal": "2026-11-08T14:08:21.000Z",
+   "durationSec": 3872,
+   "elapsedSec": 3872,
+   "distanceM": 10007,
+   "elevationGainM": null,
+   "avgHr": 173.4,
+   "maxHr": 191,
+   "avgCadence": null,
+   "calories": 1031,
+   "hasStreams": true
+  }
+ ]
 }
