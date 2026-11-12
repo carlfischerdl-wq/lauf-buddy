@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fcfcfb" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Lauf-Buddy" />
+  <meta name="robots" content="noindex" />
+  <title>Lauf-Buddy</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="top">
+    <a href="#/" class="brand">Lauf-Buddy</a>
+    <span id="sync" class="muted small"></span>
+  </header>
+  <div id="demo-banner" class="banner" hidden>
+    Demo-Daten – nach deinem ersten hochgeladenen Lauf erscheinen hier deine echten Trainings.
+  </div>
+  <main id="app"><p class="muted">Lade…</p></main>
+  <nav class="tabs" aria-label="Navigation">
+    <a href="#/" data-tab="home">Übersicht</a>
+    <a href="#/laeufe" data-tab="runs">Läufe</a>
+    <a href="#/ziel" data-tab="goal">Ziel &amp; Plan</a>
+    <a href="#/einstellungen" data-tab="settings">Profil</a>
+  </nav>
+  <div id="tip" class="tip" role="tooltip" hidden></div>
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>
