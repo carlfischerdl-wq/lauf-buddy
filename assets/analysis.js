@@ -58,7 +58,11 @@ export function buildProfile(config = {}, overrides = {}, workouts = []) {
     maxHrSource = observedMax >= est ? "höchster gemessener Wert" : age ? "geschätzt aus Alter" : "Standardwert (Alter eintragen!)";
   }
   const restHr = Number(c.ruheHF) || 60;
-  return { name: c.name || "", age, maxHr, restHr, maxHrSource, restHrSource: Number(c.ruheHF) ? "eingetragen" : "Standardwert" };
+  // Pulszonen der Apple Watch: Untergrenzen von Zone 2, 3, 4, 5 in bpm
+  let zones = Array.isArray(c.zonen) ? c.zonen.map(Number) : null;
+  if (!zones || zones.length !== 4 || zones.some((z, i) => !(z > 40) || (i && z <= zones[i - 1]))) zones = null;
+  if (zones && zones[3] >= maxHr) maxHr = zones[3] + 10;
+  return { name: c.name || "", age, maxHr, restHr, zones, maxHrSource, restHrSource: Number(c.ruheHF) ? "eingetragen" : "Standardwert" };
 }
 
 export const ZONES = [
@@ -68,8 +72,29 @@ export const ZONES = [
   { z: 4, label: "Z4 Schwelle", from: 0.8, to: 0.9 },
   { z: 5, label: "Z5 Maximal", from: 0.9, to: 1.0 },
 ];
-export const hrrOf = (hr, p) => (hr - p.restHr) / (p.maxHr - p.restHr);
-export const hrAt = (frac, p) => Math.round(p.restHr + frac * (p.maxHr - p.restHr));
+// Intensitätsskala 0–1: Zonengrenzen liegen bei 0,6 / 0,7 / 0,8 / 0,9.
+// Mit Watch-Zonen wird stückweise linear zwischen deinen Zonengrenzen gerechnet,
+// sonst nach Karvonen (Herzfrequenzreserve).
+const zonePoints = (p) => [[0, p.restHr], [0.6, p.zones[0]], [0.7, p.zones[1]], [0.8, p.zones[2]], [0.9, p.zones[3]], [1, p.maxHr]];
+export function hrrOf(hr, p) {
+  if (!p.zones) return (hr - p.restHr) / (p.maxHr - p.restHr);
+  const pts = zonePoints(p);
+  if (hr <= pts[0][1]) return 0;
+  for (let i = 1; i < pts.length; i++) {
+    const [f0, h0] = pts[i - 1], [f1, h1] = pts[i];
+    if (hr <= h1) return f0 + ((hr - h0) / (h1 - h0)) * (f1 - f0);
+  }
+  return 1 + (hr - p.maxHr) / (p.maxHr - p.restHr);
+}
+export function hrAt(frac, p) {
+  if (!p.zones) return Math.round(p.restHr + frac * (p.maxHr - p.restHr));
+  const pts = zonePoints(p);
+  for (let i = 1; i < pts.length; i++) {
+    const [f0, h0] = pts[i - 1], [f1, h1] = pts[i];
+    if (frac <= f1) return Math.round(h0 + ((frac - f0) / (f1 - f0)) * (h1 - h0));
+  }
+  return p.maxHr;
+}
 export function zoneOf(hr, p) {
   const f = hrrOf(hr, p);
   if (f < 0.6) return 1;
@@ -79,7 +104,7 @@ export function zoneOf(hr, p) {
   return 5;
 }
 export function zoneBounds(p) {
-  return ZONES.map((z) => ({ ...z, hrFrom: hrAt(z.from, p), hrTo: hrAt(z.to, p) }));
+  return ZONES.map((z) => ({ ...z, hrFrom: z.z === 1 && p.zones ? p.restHr : hrAt(z.from, p), hrTo: hrAt(z.to, p) }));
 }
 
 // Sekunden je Zone (aus Pulsverlauf, sonst Näherung über Durchschnittspuls)

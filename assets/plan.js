@@ -256,12 +256,12 @@ function quality({ kind, i, d, phase, paces, p, recovery, inTaper, focus, km }) 
   const T = fmtPace(paces.T), I = fmtPace(paces.I), R = fmtPace(paces.R);
   const z4 = `Puls ${hrAt(0.8, p)}–${hrAt(0.9, p)} bpm`;
   const z5 = `Puls > ${hrAt(0.88, p)} bpm`;
-  const wu = "2 km einlaufen, 1,5 km auslaufen";
+  const wu = "2 km einlaufen, locker auslaufen";
   // Strukturdaten für den Apple-Watch-Export (Pace in s/km, [schnell, langsam])
   const rng = (pc, d = 6) => [Math.round(pc - d), Math.round(pc + d)];
-  const W = (body) => ({ warmup: { dist_m: 2000 }, cooldown: { dist_m: 1500 }, blocks: body });
+  const W = (body) => ({ warmup: { dist_m: 2000 }, cooldown: { open: true }, blocks: body });
   const strides = { type: "easy", title: "Locker + Steigerungen", distanceKm: Math.max(4, km * 0.9), paceText: `${fmtPace(paces.E[0])} min/km, Steigerungen bis ${R}`, hrText: `Puls < ${hrAt(0.7, p)} bpm`, desc: "Lockerer Lauf, am Ende 6× 20 s locker-schnell steigern, dazwischen gehen.",
-    struct: { blocks: [{ reps: 1, steps: [{ p: "work", dist_m: Math.round(Math.max(3, km * 0.9 - 1) * 1000), pace: [Math.round(paces.E[0]), Math.round(paces.E[1])] }] }, { reps: 6, steps: [{ p: "work", time_s: 20 }, { p: "recovery", time_s: 60 }] }] } };
+    struct: { blocks: [{ reps: 1, steps: [{ p: "work", dist_m: Math.round(Math.max(3, km * 0.9 - 1) * 1000), pace: [Math.round(paces.E[0]), Math.round(paces.E[1])], easy: true }] }, { reps: 6, steps: [{ p: "work", time_s: 20 }, { p: "recovery", time_s: 60 }] }] } };
 
   if (recovery || focus === "weight" || (!d && phase === "Grundlage")) {
     if (kind === "Q2" || recovery) return strides;
@@ -312,4 +312,103 @@ export function plannedFor(plan, dayKey) {
   if (!plan) return null;
   for (const w of plan.weeks) for (const s of w.sessions) if (s.date === dayKey) return s;
   return null;
+}
+
+// ---------- 3) Einzeltraining für heute aus Freitext ("Worauf hast du heute Lust?") ----------
+export function todaySession(text, ctx) {
+  const t = ` ${text.toLowerCase().replace(/,/g, ".")} `;
+  const p = ctx.profile;
+  const vdot = ctx.vdot || 36;
+  const paces = trainingPaces(vdot);
+  const E = paces.E, easyMid = (E[0] + E[1]) / 2;
+  const easyPace = [Math.round(E[0]), Math.round(E[1])];
+  const rng = (pc, d = 6) => [Math.round(pc - d), Math.round(pc + d)];
+  const z2 = `Puls < ${hrAt(0.7, p)} bpm`, z4 = `Puls ${hrAt(0.8, p)}–${hrAt(0.9, p)} bpm`, z5 = `Puls > ${hrAt(0.88, p)} bpm`;
+  const wuTxt = "2 km einlaufen, locker auslaufen";
+  const W = (blocks) => ({ warmup: { dist_m: 2000 }, cooldown: { open: true }, blocks });
+
+  // Zahlen aus dem Text
+  let m;
+  const km = (m = t.match(/(\d+(?:\.\d+)?)\s*(?:km|kilometer)\b/)) && !/\d\s*[x×]\s*\d+(?:\.\d+)?\s*km/.test(t) ? parseFloat(m[1]) : null;
+  let min = null;
+  if ((m = t.match(/(\d+(?:\.\d+)?)\s*(?:h|std|stunden?)\b/))) min = parseFloat(m[1]) * 60;
+  if ((m = t.match(/(\d{1,3})\s*(?:min|minuten)\b/)) && !/\d\s*[x×]\s*\d+\s*min/.test(t)) min = (min || 0) + +m[1];
+  const rep = t.match(/(\d{1,2})\s*[x×]\s*(\d+(?:\.\d+)?)\s*(km|m|min|minuten|s|sek|sekunden)\b/);
+  const reps = rep ? +rep[1] : null;
+  const repVal = rep ? parseFloat(rep[2]) : null;
+  const repUnit = rep ? rep[3] : null;
+
+  // Art des Trainings
+  let kind =
+    /berg|hügel|hill/.test(t) ? "hills" :
+    /fahrtspiel|fartlek/.test(t) ? "fartlek" :
+    /steigerung/.test(t) ? "strides" :
+    /intervall|sprint|bahn|schnell|400|800|1000/.test(t) || (rep && /^(m|km)$/.test(repUnit)) ? "interval" :
+    /tempo|schwelle|zügig|threshold/.test(t) || (rep && /min/.test(repUnit)) ? "tempo" :
+    /lang|long|ausdauer/.test(t) ? "long" :
+    /locker|easy|entspannt|regener|ruhig|gemütlich|leicht/.test(t) ? "easy" : null;
+
+  // Kein Typ genannt → Vorschlag nach Belastung der letzten Tage
+  let reason = "";
+  if (!kind) {
+    const last = ctx.lastType;
+    kind = ["interval", "tempo", "race", "long"].includes(last) ? "easy" : km && km >= 12 ? "long" : "easy";
+    reason = last && kind === "easy" ? "Dein letzter Lauf war intensiv – deshalb heute locker." : "";
+  }
+
+  let s;
+  if (kind === "easy" || kind === "long") {
+    const dist = km || (min ? (min * 60) / easyMid : kind === "long" ? 12 : 6);
+    s = { type: kind, title: kind === "long" ? "Langer Lauf" : "Lockerer Lauf", distanceKm: dist, paceText: `${fmtPace(E[0])}–${fmtPace(E[1])} min/km`, hrText: z2,
+      desc: kind === "long" ? "Ruhig und gleichmäßig – Dauer zählt, nicht Tempo." : "Entspannt, du kannst dich dabei unterhalten.", struct: null, mPartKm: 0 };
+  } else if (kind === "strides") {
+    const dist = km || 5;
+    s = { type: "easy", title: "Locker + Steigerungen", distanceKm: dist, paceText: `${fmtPace(E[0])} min/km, Steigerungen bis ${fmtPace(paces.R)}`, hrText: z2,
+      desc: "Lockerer Lauf, am Ende 6× 20 s locker-schnell steigern, dazwischen gehen.",
+      struct: { blocks: [{ reps: 1, steps: [{ p: "work", dist_m: Math.round(Math.max(2, dist - 1) * 1000), pace: easyPace, easy: true }] }, { reps: 6, steps: [{ p: "work", time_s: 20 }, { p: "recovery", time_s: 60 }] }] } };
+  } else if (kind === "hills") {
+    const n = reps || 8;
+    s = { type: "interval", title: "Bergsprints", distanceKm: 6, paceText: "kräftig bergauf", hrText: z5, desc: `${wuTxt}. ${n}× 20 s steil bergauf, gehend zurück.`,
+      struct: W([{ reps: n, steps: [{ p: "work", time_s: 20 }, { p: "recovery", time_s: 90 }] }]) };
+  } else if (kind === "fartlek") {
+    const n = reps || 8;
+    s = { type: "tempo", title: "Fahrtspiel", distanceKm: 3.5 + (n * 2 * 60) / easyMid, paceText: `zügig ≈ ${fmtPace(paces.T)} min/km`, hrText: z4, desc: `${wuTxt}. ${n}× 1 min zügig / 1 min locker.`,
+      struct: W([{ reps: n, steps: [{ p: "work", time_s: 60, pace: rng(paces.T, 10) }, { p: "recovery", time_s: 60 }] }]) };
+  } else if (kind === "tempo") {
+    let n = 1, workMin;
+    if (rep && /min/.test(repUnit)) { n = reps; workMin = repVal; }
+    else if (min) workMin = Math.max(10, min - 20);
+    else if (km) workMin = Math.max(10, ((km - 3.5) * paces.T) / 60);
+    else workMin = 20;
+    workMin = Math.round(workMin);
+    s = { type: "tempo", title: n > 1 ? "Schwellenlauf" : "Tempodauerlauf", distanceKm: 3.5 + (n * workMin * 60) / paces.T, paceText: `${fmtPace(paces.T)} min/km`, hrText: z4,
+      desc: `${wuTxt}. ${n > 1 ? `${n}× ${workMin} min` : `${workMin} min am Stück`} im Schwellentempo${n > 1 ? ", 3 min Trabpause" : ""}.`,
+      struct: W([{ reps: n, steps: n > 1 ? [{ p: "work", time_s: workMin * 60, pace: rng(paces.T) }, { p: "recovery", time_s: 180 }] : [{ p: "work", time_s: workMin * 60, pace: rng(paces.T) }] }]) };
+  } else {
+    // Intervalle
+    let n = reps || 5, dist = 1000, timeS = null;
+    if (rep) {
+      if (repUnit === "km") dist = repVal * 1000;
+      else if (repUnit === "m") dist = repVal;
+      else if (/min/.test(repUnit)) { timeS = repVal * 60; dist = null; }
+      else { timeS = repVal; dist = null; }
+    }
+    const pace = dist && dist <= 400 ? paces.R : paces.I;
+    const workSec = timeS || ((dist / 1000) * pace);
+    const recSec = Math.max(60, Math.round(workSec / 15) * 15);
+    const work = dist ? { p: "work", dist_m: dist, pace: rng(pace) } : { p: "work", time_s: timeS, pace: rng(pace) };
+    const label = dist ? `${n}× ${dist >= 1000 ? `${String(dist / 1000).replace(".", ",")} km` : `${dist} m`}` : `${n}× ${timeS >= 60 ? `${timeS / 60} min` : `${timeS} s`}`;
+    s = { type: "interval", title: "Intervalle", distanceKm: 3.5 + (n * (workSec + recSec)) / pace / 1.15, paceText: `${fmtPace(pace)} min/km`, hrText: z5,
+      desc: `${wuTxt}. ${label} im ${dist && dist <= 400 ? "Wiederholungs" : "Intervall"}tempo, ${recSec} s Trabpause.`,
+      struct: W([{ reps: n, steps: [work, { p: "recovery", time_s: recSec }] }]) };
+  }
+  s.distanceKm = Math.round(s.distanceKm * 2) / 2;
+  s.durationMin = Math.round((s.distanceKm * easyMid * (s.type === "easy" || s.type === "long" ? 1 : 0.9)) / 60 / 5) * 5;
+  s.easyPace = easyPace;
+  const today = new Date();
+  s.date = localDayKey(today);
+  s.dow = DOW[(today.getDay() + 6) % 7];
+  s.reason = reason;
+  s.request = text;
+  return s;
 }

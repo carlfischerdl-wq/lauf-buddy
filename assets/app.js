@@ -195,6 +195,7 @@ async function viewHome() {
   }
   const last = await detail(ws[0].id);
   const a = analysisFor(last);
+  store.set("lastType", Date.now() - Date.parse(last.start) < 3 * A.DAY ? a.type : null);
   const plan = store.get("plan");
   const today = P.plannedFor(plan, A.localDayKey(new Date()));
   const weeks = weeklyKm(12);
@@ -351,7 +352,7 @@ async function watchExport(session, btn) {
 function planContext() {
   const ws = S.index.workouts;
   const km28 = ws.filter((w) => Date.now() - Date.parse(w.start) < 28 * A.DAY).reduce((s, w) => s + w.distanceM / 1000, 0);
-  return { vdot: A.estimateVdot(ws, S.profile), weeklyKm: km28 / 4 || null, profile: S.profile, goalText: store.get("goalText", "") };
+  return { vdot: A.estimateVdot(ws, S.profile), weeklyKm: km28 / 4 || null, profile: S.profile, goalText: store.get("goalText", ""), lastType: store.get("lastType", null) };
 }
 
 function parseTimeInput(v) {
@@ -426,12 +427,30 @@ function planHtml(plan) {
     <div class="actions"><button class="btn ghost" id="del-plan">Plan löschen</button></div>`;
 }
 
+function todayHtml(s) {
+  return `<div class="sess today" style="margin:14px -16px -16px;border-radius:0 0 var(--radius) var(--radius)">
+    <div class="d">Heute</div>
+    <div><div class="title">${esc(s.title)}</div><div class="small muted">${esc(s.paceText)} · ${esc(s.hrText)}</div></div>
+    <div class="small" style="text-align:right;white-space:nowrap"><b>${num(s.distanceKm, s.distanceKm % 1 ? 1 : 0)} km</b><br><span class="muted">~${s.durationMin} min</span></div>
+    <div class="desc">${esc(s.desc)}${s.reason ? `<br><i>${esc(s.reason)}</i>` : ""}</div>
+    <div class="desc"><button class="btn small" id="today-watch-btn">⌚ Auf die Apple Watch</button></div>
+  </div>`;
+}
+
 function viewGoal() {
   const plan = store.get("plan");
   const text = store.get("goalText", "");
   const g = plan?.goal || (text ? P.parseGoal(text) : null);
+  const todayS = store.get("todaySession");
+  const todayValid = todayS && todayS.date === A.localDayKey(new Date());
   $app.innerHTML = `
     <h1>Ziel &amp; Plan</h1>
+    <section class="card">
+      <h2>Worauf hast du heute Lust?</h2>
+      <textarea id="today-text" style="min-height:64px" placeholder="z. B. „lockere 8 km“, „5× 1000 m“, „3× 10 min Tempo“, „45 min Fahrtspiel“, „Bergsprints“ – oder einfach „keine Ahnung“">${esc(todayValid ? todayS.request : "")}</textarea>
+      <div class="actions"><button class="btn" id="today-make">Training für heute erstellen</button></div>
+      <div id="today-result">${todayValid ? todayHtml(todayS) : ""}</div>
+    </section>
     <section class="card">
       <h2>Was ist dein Ziel?</h2>
       <textarea id="goal" placeholder="z. B. „Ich will in 12 Wochen 10 km unter 50 Minuten laufen, 4× pro Woche“ oder „Halbmarathon am 26.4. in 1:55“">${esc(text)}</textarea>
@@ -457,6 +476,18 @@ function viewGoal() {
     make(P.parseGoal(t));
   };
   document.getElementById("regen").onclick = () => make(readGoalForm());
+  const bindToday = () => {
+    const b = document.getElementById("today-watch-btn");
+    if (b) b.onclick = () => watchExport(store.get("todaySession"), b);
+  };
+  bindToday();
+  document.getElementById("today-make").onclick = () => {
+    const t = document.getElementById("today-text").value.trim() || "egal";
+    const sess = P.todaySession(t, planContext());
+    store.set("todaySession", sess);
+    document.getElementById("today-result").innerHTML = todayHtml(sess);
+    bindToday();
+  };
   $app.querySelectorAll("[data-watch]").forEach((b) => (b.onclick = () => {
     const [wi, si] = b.dataset.watch.split("-").map(Number);
     watchExport(plan.weeks[wi].sessions[si], b);
@@ -480,8 +511,14 @@ function viewSettings() {
         <div><label>Max. Puls (falls bekannt)</label><input id="p-max" type="number" inputmode="numeric" value="${o.maxHF ?? ""}" placeholder="${p.maxHr}"></div>
         <div><label>Ruhepuls (morgens)</label><input id="p-rest" type="number" inputmode="numeric" value="${o.ruheHF ?? ""}" placeholder="${p.restHr}"></div>
       </div>
+      <h3>Pulszonen deiner Apple Watch</h3>
+      <p class="small muted" style="margin:0">Damit Website und Watch dieselben Zonen nutzen: In der <b>Watch-App auf dem iPhone → Training → Herzfrequenzzonen</b> nachsehen und hier jeweils den <b>unteren Wert</b> der Zonen 2–5 eintragen. Leer lassen = automatische Berechnung.</p>
+      <div class="form2">
+        ${[2, 3, 4, 5].map((z, i) => `<div><label>Zone ${z} ab (bpm)</label><input id="p-z${z}" type="number" inputmode="numeric" value="${(o.zonen || [])[i] ?? ""}" placeholder="${A.hrAt([0.6, 0.7, 0.8, 0.9][i], p)}"></div>`).join("")}
+      </div>
       <div class="actions"><button class="btn" id="save">Speichern</button></div>
-      <p class="small muted">Aktuell: Max-HF ${p.maxHr} (${p.maxHrSource}), Ruhe-HF ${p.restHr} (${p.restHrSource}). Tipp: Den Ruhepuls zeigt die Apple Watch in der Health-App.</p>
+      ${o.zonen && !p.zones ? `<div class="notice" style="--c:var(--warning)">⚠︎ Die Zonenwerte sind unvollständig oder nicht aufsteigend – es wird weiter automatisch gerechnet.</div>` : ""}
+      <p class="small muted">Aktuell: ${p.zones ? "Zonen von deiner Apple Watch" : "Zonen automatisch berechnet"} · Max-HF ${p.maxHr} (${p.maxHrSource}), Ruhe-HF ${p.restHr} (${p.restHrSource}). Tipp: Den Ruhepuls zeigt die Apple Watch in der Health-App.</p>
     </section>
     <section class="card"><h2>Deine Pulszonen</h2>
       <table class="paces">${zb.map((z, i) => `<tr><td><span class="legend"><span style="--c:var(--z${i + 1})">${z.label}</span></span></td><td>${z.hrFrom}–${z.hrTo} bpm</td></tr>`).join("")}</table>
@@ -498,6 +535,7 @@ function viewSettings() {
       geburtsjahr: document.getElementById("p-year").value,
       maxHF: document.getElementById("p-max").value,
       ruheHF: document.getElementById("p-rest").value,
+      zonen: [2, 3, 4, 5].map((z) => document.getElementById("p-z" + z).value).some((v) => v) ? [2, 3, 4, 5].map((z) => Number(document.getElementById("p-z" + z).value)) : null,
     });
     S.profile = A.buildProfile(S.config, store.get("profil", {}), S.index.workouts);
     viewSettings();
