@@ -205,7 +205,7 @@ async function viewHome() {
 
   $app.innerHTML = `
     <h1>Hallo${S.profile.name ? " " + esc(S.profile.name) : ""} 👋</h1>
-    ${today ? `<section class="card"><div class="muted small">Heute laut Plan</div><h2 style="margin:4px 0">${esc(today.title)} · ${num(today.distanceKm, 1)} km</h2><p class="small" style="margin:4px 0">${esc(today.paceText)} · ${esc(today.hrText)}</p><p class="small muted" style="margin:0">${esc(today.desc)}</p></section>` : ""}
+    ${today ? `<section class="card"><div class="muted small">Heute laut Plan</div><h2 style="margin:4px 0">${esc(today.title)} · ${num(today.distanceKm, 1)} km</h2><p class="small" style="margin:4px 0">${esc(today.paceText)} · ${esc(today.hrText)}</p><p class="small muted" style="margin:0">${esc(today.desc)}</p><div class="actions"><button class="btn small" id="today-watch">⌚ Auf die Apple Watch</button></div></section>` : ""}
     <div class="muted small" style="margin:14px 4px -4px">Letztes Training</div>
     ${runCard(last, a)}
     <div class="grid2">
@@ -223,6 +223,8 @@ async function viewHome() {
       ${barChart({ labels: weeks.map((w) => fmtDate(w.start, { day: "numeric", month: "numeric" })), values: weeks.map((w) => w.km), fmt: (v) => Math.round(v),
         tip: (i) => `Woche ab ${fmtDate(weeks[i].start, { day: "numeric", month: "short" })}: ${num(weeks[i].km, 1)} km, ${weeks[i].runs} Läufe` })}
     </section>`;
+  const tw = document.getElementById("today-watch");
+  if (tw) tw.onclick = () => watchExport(today, tw);
 }
 
 async function viewRuns() {
@@ -323,6 +325,28 @@ async function viewRun(id) {
   };
 }
 
+// ---------- Apple-Watch-Export ----------
+async function watchExport(session, btn) {
+  if (!session.easyPace && session.type !== "race") {
+    alert("Dieser Plan wurde vor dem Watch-Export erstellt. Bitte unter „Ziel & Plan“ einmal „Plan neu berechnen“ tippen.");
+    return;
+  }
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Erstelle Training…";
+  try {
+    const { exportToWatch } = await import("./watch.js");
+    const r = await exportToWatch(session);
+    btn.textContent = r === "aborted" ? label : "✓ Exportiert";
+  } catch (e) {
+    console.error(e);
+    btn.textContent = "Fehler – nochmal versuchen";
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => (btn.textContent = label), 4000);
+  }
+}
+
 // ---------- Ziel & Plan ----------
 function planContext() {
   const ws = S.index.workouts;
@@ -388,13 +412,14 @@ function planHtml(plan) {
       </table>
     </section>
     <section class="card tight">
-      ${plan.weeks.map((w, i) => `<details class="week" ${i === Math.max(0, curIdx) ? "open" : ""}>
+      ${plan.weeks.map((w, i, _a, wi = i) => `<details class="week" ${i === Math.max(0, curIdx) ? "open" : ""}>
         <summary><b>Woche ${w.n} <span class="muted small" style="font-weight:500">· ${esc(w.phase)}</span></b><span class="small muted">${fmtDate(w.weekStart, { day: "numeric", month: "short" })} · ${w.km} km</span></summary>
-        ${w.sessions.map((s) => `<div class="sess ${s.date === todayKey ? "today" : ""} ${s.date <= todayKey && doneDays.has(s.date) ? "done" : ""}">
+        ${w.sessions.map((s, si) => `<div class="sess ${s.date === todayKey ? "today" : ""} ${s.date <= todayKey && doneDays.has(s.date) ? "done" : ""}">
           <div class="d">${s.dow}<small>${fmtDate(s.date + "T12:00", { day: "numeric", month: "numeric" })}</small></div>
           <div><div class="title">${esc(s.title)}</div><div class="small muted">${esc(s.paceText)} · ${esc(s.hrText)}</div></div>
           <div class="small" style="text-align:right;white-space:nowrap"><b>${num(s.distanceKm, s.distanceKm % 1 ? 1 : 0)} km</b><br><span class="muted">~${s.durationMin} min</span></div>
           <div class="desc">${esc(s.desc)}</div>
+          <div class="desc"><button class="btn ghost small" data-watch="${wi}-${si}">⌚ Auf die Apple Watch</button></div>
         </div>`).join("")}
       </details>`).join("")}
     </section>
@@ -432,6 +457,10 @@ function viewGoal() {
     make(P.parseGoal(t));
   };
   document.getElementById("regen").onclick = () => make(readGoalForm());
+  $app.querySelectorAll("[data-watch]").forEach((b) => (b.onclick = () => {
+    const [wi, si] = b.dataset.watch.split("-").map(Number);
+    watchExport(plan.weeks[wi].sessions[si], b);
+  }));
   const del = document.getElementById("del-plan");
   if (del) del.onclick = () => { if (confirm("Plan wirklich löschen?")) { store.del("plan"); viewGoal(); } };
 }

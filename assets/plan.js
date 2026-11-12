@@ -182,7 +182,7 @@ export function generatePlan(goal, ctx) {
       w.sessions = w.sessions.filter((s) => s.date !== before(1) && s.date <= rk);
       for (const s of w.sessions) {
         if (s.date === before(2) || s.date === before(3)) {
-          Object.assign(s, { type: "easy", title: "Locker + 3 Steigerungen", distanceKm: 4, durationMin: 25, desc: "Nur auflockern – Beine frisch halten für das Rennen." });
+          Object.assign(s, { type: "easy", title: "Locker + 3 Steigerungen", distanceKm: 4, durationMin: 25, desc: "Nur auflockern – Beine frisch halten für das Rennen.", struct: null, mPartKm: 0 });
         }
       }
     }
@@ -226,12 +226,14 @@ function buildWeek({ i, weeks, km, days, d, phase, paces, p, weekStart, recovery
     } else if (kind === "L") {
       const mPart = d >= 21 && phase.startsWith("Spezifisch") && !recovery ? Math.round(longKm * 0.35) : 0;
       s = { type: "long", title: "Langer Lauf", distanceKm: longKm, paceText: ePace, hrText: z2,
-        desc: mPart ? `Locker beginnen, die letzten ${mPart} km im Renntempo (${fmtPace(d >= 42 ? paces.M : (paces.M + paces.T) / 2)} min/km).` : "Ruhig und gleichmäßig – Dauer zählt, nicht Tempo." };
+        desc: mPart ? `Locker beginnen, die letzten ${mPart} km im Renntempo (${fmtPace(d >= 42 ? paces.M : (paces.M + paces.T) / 2)} min/km).` : "Ruhig und gleichmäßig – Dauer zählt, nicht Tempo.",
+        mPartKm: mPart, mPace: Math.round(d >= 42 ? paces.M : (paces.M + paces.T) / 2) };
     } else {
       s = quality({ kind, i, d, phase, paces, p, recovery, inTaper, focus, km: qKm });
     }
     s.date = localDayKey(date);
     s.dow = DOW[dow];
+    s.easyPace = [Math.round(E[0]), Math.round(E[1])];
     s.distanceKm = Math.round(s.distanceKm * 2) / 2;
     s.durationMin = s.durationMin || Math.round((s.distanceKm * (s.type === "easy" || s.type === "long" ? easyMid : easyMid * 0.9)) / 60 / 5) * 5;
     sessions.push(s);
@@ -255,36 +257,47 @@ function quality({ kind, i, d, phase, paces, p, recovery, inTaper, focus, km }) 
   const z4 = `Puls ${hrAt(0.8, p)}–${hrAt(0.9, p)} bpm`;
   const z5 = `Puls > ${hrAt(0.88, p)} bpm`;
   const wu = "2 km einlaufen, 1,5 km auslaufen";
-  const strides = { type: "easy", title: "Locker + Steigerungen", distanceKm: Math.max(4, km * 0.9), paceText: `${fmtPace(paces.E[0])} min/km, Steigerungen bis ${R}`, hrText: `Puls < ${hrAt(0.7, p)} bpm`, desc: "Lockerer Lauf, am Ende 6× 20 s locker-schnell steigern, dazwischen gehen." };
+  // Strukturdaten für den Apple-Watch-Export (Pace in s/km, [schnell, langsam])
+  const rng = (pc, d = 6) => [Math.round(pc - d), Math.round(pc + d)];
+  const W = (body) => ({ warmup: { dist_m: 2000 }, cooldown: { dist_m: 1500 }, blocks: body });
+  const strides = { type: "easy", title: "Locker + Steigerungen", distanceKm: Math.max(4, km * 0.9), paceText: `${fmtPace(paces.E[0])} min/km, Steigerungen bis ${R}`, hrText: `Puls < ${hrAt(0.7, p)} bpm`, desc: "Lockerer Lauf, am Ende 6× 20 s locker-schnell steigern, dazwischen gehen.",
+    struct: { blocks: [{ reps: 1, steps: [{ p: "work", dist_m: Math.round(Math.max(3, km * 0.9 - 1) * 1000), pace: [Math.round(paces.E[0]), Math.round(paces.E[1])] }] }, { reps: 6, steps: [{ p: "work", time_s: 20 }, { p: "recovery", time_s: 60 }] }] } };
 
   if (recovery || focus === "weight" || (!d && phase === "Grundlage")) {
     if (kind === "Q2" || recovery) return strides;
-    return { type: "tempo", title: "Fahrtspiel", distanceKm: Math.max(5, km), paceText: `zügig ≈ ${T} min/km`, hrText: z4, desc: `${wu}. Dazwischen 8× 1 min zügig / 1 min locker.` };
+    return { type: "tempo", title: "Fahrtspiel", distanceKm: Math.max(5, km), paceText: `zügig ≈ ${T} min/km`, hrText: z4, desc: `${wu}. Dazwischen 8× 1 min zügig / 1 min locker.`,
+      struct: W([{ reps: 8, steps: [{ p: "work", time_s: 60, pace: rng(paces.T, 10) }, { p: "recovery", time_s: 60 }] }]) };
   }
   if (inTaper) {
-    return { type: "interval", title: "Kurz & knackig", distanceKm: Math.max(5, km * 0.7), paceText: `${d <= 10 ? I : T} min/km`, hrText: z4, desc: `${wu}. 4× 1 km im Wettkampftempo, 2 min Trabpause. Frisch bleiben!` };
+    return { type: "interval", title: "Kurz & knackig", distanceKm: Math.max(5, km * 0.7), paceText: `${d <= 10 ? I : T} min/km`, hrText: z4, desc: `${wu}. 4× 1 km im Wettkampftempo, 2 min Trabpause. Frisch bleiben!`,
+      struct: W([{ reps: 4, steps: [{ p: "work", dist_m: 1000, pace: rng(d <= 10 ? paces.I : paces.T) }, { p: "recovery", time_s: 120 }] }]) };
   }
   if (phase.startsWith("Grundlage")) {
     if (kind === "Q2") return strides;
     return i % 2
-      ? { type: "interval", title: "Bergsprints", distanceKm: Math.max(5, km), paceText: "kräftig bergauf", hrText: z5, desc: `${wu}. 8× 15–20 s steil bergauf, gehend zurück.` }
-      : { type: "tempo", title: "Fahrtspiel", distanceKm: Math.max(5, km), paceText: `zügig ≈ ${T} min/km`, hrText: z4, desc: `${wu}. ${6 + (i % 3) * 2}× 1 min zügig / 1 min locker.` };
+      ? { type: "interval", title: "Bergsprints", distanceKm: Math.max(5, km), paceText: "kräftig bergauf", hrText: z5, desc: `${wu}. 8× 15–20 s steil bergauf, gehend zurück.`,
+        struct: W([{ reps: 8, steps: [{ p: "work", time_s: 20 }, { p: "recovery", time_s: 90 }] }]) }
+      : { type: "tempo", title: "Fahrtspiel", distanceKm: Math.max(5, km), paceText: `zügig ≈ ${T} min/km`, hrText: z4, desc: `${wu}. ${6 + (i % 3) * 2}× 1 min zügig / 1 min locker.`,
+        struct: W([{ reps: 6 + (i % 3) * 2, steps: [{ p: "work", time_s: 60, pace: rng(paces.T, 10) }, { p: "recovery", time_s: 60 }] }]) };
   }
 
   const threshold = () => {
     const mins = Math.min(8 + i, 20);
     const reps = d >= 21 ? 3 : 2;
-    return { type: "tempo", title: "Schwellenlauf", distanceKm: 3.5 + (reps * mins * 60) / paces.T, paceText: `${T} min/km`, hrText: z4, desc: `${wu}. ${reps}× ${mins} min im Schwellentempo, 3 min Trabpause.` };
+    return { type: "tempo", title: "Schwellenlauf", distanceKm: 3.5 + (reps * mins * 60) / paces.T, paceText: `${T} min/km`, hrText: z4, desc: `${wu}. ${reps}× ${mins} min im Schwellentempo, 3 min Trabpause.`,
+      struct: W([{ reps, steps: [{ p: "work", time_s: mins * 60, pace: rng(paces.T) }, { p: "recovery", time_s: 180 }] }]) };
   };
   const intervals = () => {
     const set = d <= 5 ? (phase.startsWith("Spez") ? [6, 800] : [5, 1000]) : d <= 10 ? (phase.startsWith("Spez") ? [4, 1600] : [5, 1000]) : [5, 1000];
-    return { type: "interval", title: "Intervalle", distanceKm: 3.5 + (set[0] * set[1] * 1.35) / 1000, paceText: `${I} min/km`, hrText: z5, desc: `${wu}. ${set[0]}× ${set[1]} m im Intervalltempo, Trabpause ≈ gleich lang wie die Belastung.` };
+    return { type: "interval", title: "Intervalle", distanceKm: 3.5 + (set[0] * set[1] * 1.35) / 1000, paceText: `${I} min/km`, hrText: z5, desc: `${wu}. ${set[0]}× ${set[1]} m im Intervalltempo, Trabpause ≈ gleich lang wie die Belastung.`,
+      struct: W([{ reps: set[0], steps: [{ p: "work", dist_m: set[1], pace: rng(paces.I) }, { p: "recovery", time_s: Math.round((set[1] / 1000) * paces.I / 30) * 30 }] }]) };
   };
   const raceSpecific = () => {
     if (d >= 21) {
       const k = d >= 42 ? 8 + Math.min(i, 6) : 2 * Math.min(2 + Math.floor(i / 3), 5);
       const pace = d >= 42 ? paces.M : (paces.M + paces.T) / 2;
-      return { type: "tempo", title: d >= 42 ? "Marathontempo" : "HM-Tempo", distanceKm: 3.5 + k, paceText: `${fmtPace(pace)} min/km`, hrText: `Puls ${hrAt(0.75, p)}–${hrAt(0.85, p)} bpm`, desc: `${wu}. ${d >= 42 ? `${k} km am Stück` : `2× ${k / 2} km`} im Renntempo.` };
+      return { type: "tempo", title: d >= 42 ? "Marathontempo" : "HM-Tempo", distanceKm: 3.5 + k, paceText: `${fmtPace(pace)} min/km`, hrText: `Puls ${hrAt(0.75, p)}–${hrAt(0.85, p)} bpm`, desc: `${wu}. ${d >= 42 ? `${k} km am Stück` : `2× ${k / 2} km`} im Renntempo.`,
+        struct: W(d >= 42 ? [{ reps: 1, steps: [{ p: "work", dist_m: k * 1000, pace: rng(pace, 8) }] }] : [{ reps: 2, steps: [{ p: "work", dist_m: (k / 2) * 1000, pace: rng(pace, 6) }, { p: "recovery", time_s: 180 }] }]) };
     }
     return intervals();
   };
