@@ -32,6 +32,7 @@ async function load() {
   S.index = idx;
   S.health = await getJson("data/health.json").catch(() => null);
   S.profile = A.buildProfile(S.config, store.get("profil", {}), idx.workouts, S.health);
+  S.profile.testIds = store.get("tests", []);
   document.getElementById("demo-banner").hidden = !S.demo;
   const ls = idx.lastSync ? `Sync ${fmtDate(idx.lastSync, { day: "numeric", month: "short" })}, ${fmtTime(idx.lastSync)}` : "";
   document.getElementById("sync").textContent = ls;
@@ -150,7 +151,7 @@ function scoreBadge(score) {
 function chip(score) {
   return `<span class="chip" style="--c:${scoreColor(score)}">${num(score)}</span>`;
 }
-function runCard(w, a, { link = true } = {}) {
+function runCard(w, a, { link = true, next = true } = {}) {
   return `<section class="card">
     <div class="row between">
       <div>
@@ -165,7 +166,7 @@ function runCard(w, a, { link = true } = {}) {
       ${a.positives.map((t) => `<li class="plus">${esc(t)}</li>`).join("")}
       ${a.improvements.map((t) => `<li class="minus">${esc(t)}</li>`).join("")}
     </ul>
-    <div class="next"><b>Nächster Schritt:</b> ${esc(a.next)}</div>
+    ${next ? `<div class="next"><b>Nächster Schritt:</b> ${esc(a.next)}</div>` : ""}
     ${link ? `<div class="actions"><a class="btn ghost small" href="#/lauf/${w.id}">Details ansehen</a></div>` : ""}
   </section>`;
 }
@@ -187,6 +188,37 @@ function weeklyKm(n = 12) {
   return weeks;
 }
 
+// Prognose mit Spanne: schnelle Grenze aus fit.high, langsame aus fit.low
+function predictionCard(fit) {
+  if (!fit) return "";
+  const rows = [[5000, "5 km"], [10000, "10 km"], [21097.5, "Halbmarathon"]].map(([d, l]) => {
+    const fast = A.predictTime(fit.high, d), slow = A.predictTime(fit.low, d), mid = A.predictTime(fit.vdot, d);
+    return `<div class="d">${l}</div><div class="r">${A.fmtDuration(fast)} – ${A.fmtDuration(slow)}</div><div class="m">≈ ${A.fmtDuration(mid)}</div>`;
+  }).join("");
+  const t = fit.test;
+  const basis = fit.source === "test"
+    ? `Grundlage: dein Testlauf am ${fmtDate(t.start, { day: "numeric", month: "long" })} (${A.fmtKm(t.distanceM)} km in ${A.fmtDuration(t.durationSec)}${t.manual ? ", von dir markiert" : ""}).`
+    : `Grundlage: Puls und Tempo deiner letzten ${fit.n} Läufe, Höhenmeter herausgerechnet. Ohne Vollgas-Lauf kann die App nicht sehen, wie schnell du wirklich bist – deshalb ist die Spanne nach oben offen.`;
+  return `<section class="card"><h2>Deine Prognose</h2>
+    <div class="pred">${rows}</div>
+    <p class="small muted" style="margin:10px 0 0;line-height:1.45">${basis} Formwert (VDOT) ${num(fit.vdot)}.</p>
+    ${fit.source !== "test" ? `<div class="actions"><a class="btn ghost small" href="#/ziel" id="go-test">🏁 5-km-Test planen</a></div>` : ""}
+  </section>`;
+}
+
+function recommendationCard(r) {
+  if (!r) return "";
+  const s = r.session;
+  return `<section class="card">
+    <div class="muted small">Empfehlung für ${r.when}</div>
+    <h2 style="margin:4px 0">${esc(r.title)}${s ? ` · ${num(s.distanceKm, s.distanceKm % 1 ? 1 : 0)} km` : ""}</h2>
+    ${s ? `<p class="small" style="margin:4px 0">${esc(s.paceText)} · ${esc(s.hrText)} · ~${s.durationMin} min</p>${structListHtml(s.struct)}` : ""}
+    <ul class="points">${r.reasons.map((t) => `<li class="why">${esc(t)}</li>`).join("")}</ul>
+    ${r.hint ? `<div class="notice">💡 ${esc(r.hint)}</div>` : ""}
+    ${s ? `<div class="actions"><button class="btn small" id="rec-watch">⌚ Auf die Apple Watch</button></div>` : ""}
+  </section>`;
+}
+
 // ---------- Seiten ----------
 async function viewHome() {
   const ws = S.index.workouts;
@@ -200,22 +232,23 @@ async function viewHome() {
   const plan = store.get("plan");
   const today = P.plannedFor(plan, A.localDayKey(new Date()));
   const weeks = weeklyKm(12);
-  const vdot = A.estimateVdot(ws, S.profile);
+  const fit = A.estimateFitness(ws, S.profile);
   const recent = ws.slice(0, 20).reverse();
   const scores = await analyses(recent);
   const sc = recent.map((w) => scores.get(w.id)?.score);
+  const rec = today ? null : P.recommendNext(ws, { ...planContext(), plan, typeOf: (w) => scores.get(w.id)?.type ?? A.classify(w, S.profile, ws.filter((h) => h.start < w.start)) });
 
   $app.innerHTML = `
     <h1>Hallo${S.profile.name ? " " + esc(S.profile.name) : ""} 👋</h1>
     ${today ? `<section class="card"><div class="muted small">Heute laut Plan</div><h2 style="margin:4px 0">${esc(today.title)} · ${num(today.distanceKm, 1)} km</h2><p class="small" style="margin:4px 0">${esc(today.paceText)} · ${esc(today.hrText)}</p><p class="small muted" style="margin:0">${esc(today.desc)}</p><div class="actions"><button class="btn small" id="today-watch">⌚ Auf die Apple Watch</button></div></section>` : ""}
+    ${recommendationCard(rec)}
     <div class="muted small" style="margin:14px 4px -4px">Letztes Training</div>
-    ${runCard(last, a)}
+    ${runCard(last, a, { next: !rec })}
     <div class="grid2">
       <div class="stat"><div class="v">${num(weeks[11].km, 1)} km</div><div class="l">diese Woche · ${weeks[11].runs} Läufe</div></div>
       <div class="stat"><div class="v">${num(weeks.slice(7, 11).reduce((s, w) => s + w.km, 0) / 4, 1)} km</div><div class="l">Ø pro Woche (4 Wochen)</div></div>
-      ${vdot ? `<div class="stat"><div class="v">${A.fmtDuration(A.predictTime(vdot, 5000))}</div><div class="l">5 km Prognose</div></div>
-      <div class="stat"><div class="v">${A.fmtDuration(A.predictTime(vdot, 10000))}</div><div class="l">10 km Prognose</div></div>` : ""}
     </div>
+    ${predictionCard(fit)}
     <section class="card"><h2>Trainingsnoten</h2>
       ${lineChart({ xs: recent.map((_, i) => i), ys: sc, yMin: 0, yMax: 10, dots: true, fmtY: (v) => Math.round(v),
         xTicks: [[0, fmtDate(recent[0].start, { day: "numeric", month: "short" })], [recent.length - 1, fmtDate(recent.at(-1).start, { day: "numeric", month: "short" })]],
@@ -227,6 +260,14 @@ async function viewHome() {
     </section>`;
   const tw = document.getElementById("today-watch");
   if (tw) tw.onclick = () => watchExport(today, tw);
+  const rw = document.getElementById("rec-watch");
+  if (rw) rw.onclick = () => watchExport(rec.session, rw);
+  const gt = document.getElementById("go-test");
+  if (gt) gt.onclick = (e) => {
+    e.preventDefault();
+    store.set("todaySession", P.todaySession("5 km test", planContext()));
+    location.hash = "#/ziel";
+  };
 }
 
 async function viewRuns() {
@@ -288,11 +329,19 @@ async function viewRun(id) {
   // gleitender Durchschnitt fürs Tempo (glättet GPS-Rauschen)
   const smooth = paceArr.map((_, i) => { const win = paceArr.slice(Math.max(0, i - 3), i + 4).filter(Number.isFinite); return win.length ? win.reduce((x, y) => x + y, 0) / win.length : null; });
   const pv = smooth.filter(Number.isFinite).sort((x, y) => x - y);
+  const isMarked = S.profile.testIds.includes(w.id);
+  const autoTest = !isMarked && A.isTestRun(w, S.profile);
 
   $app.innerHTML = `
     <p style="margin:12px 4px 0"><a href="#/laeufe">← Alle Läufe</a></p>
     <h1>${esc(w.name)}</h1>
     ${runCard(w, a, { link: false })}
+    <section class="card" style="padding-top:12px;padding-bottom:12px">
+      <div class="row between" style="gap:12px">
+        <div class="small" style="line-height:1.4">${isMarked ? "<b>Als Testlauf markiert.</b> Deine Prognose richtet sich nach diesem Lauf." : autoTest ? "<b>Automatisch als Test erkannt</b> (Puls sehr hoch) – zählt für deine Prognose." : "Volle Leistung gegeben? Dann zählt der Lauf als Test für deine Prognose."}</div>
+        ${autoTest && !isMarked ? "" : `<button class="btn ${isMarked ? "ghost " : ""}small" id="test-toggle" style="white-space:nowrap">${isMarked ? "Markierung entfernen" : "🏁 Als Testlauf markieren"}</button>`}
+      </div>
+    </section>
     <div class="grid2">
       <div class="stat"><div class="v">${A.fmtKm(w.distanceM)}</div><div class="l">km</div></div>
       <div class="stat"><div class="v">${A.fmtDuration(w.durationSec)}</div><div class="l">Bewegungszeit</div></div>
@@ -320,6 +369,14 @@ async function viewRun(id) {
       <p class="small" style="margin-top:0">Kopiert eine Zusammenfassung dieses Laufs. Füge sie im Claude-Chat ein und frag nach Tipps.</p>
       <button class="btn" id="copy">Für Claude kopieren</button> <span id="copied" class="small muted"></span>
     </section>`;
+  const tt = document.getElementById("test-toggle");
+  if (tt) tt.onclick = () => {
+    const ids = new Set(S.profile.testIds);
+    if (ids.has(w.id)) ids.delete(w.id); else ids.add(w.id);
+    S.profile.testIds = [...ids];
+    store.set("tests", S.profile.testIds);
+    viewRun(id);
+  };
   document.getElementById("copy").onclick = async () => {
     const txt = claudeText(w, a, splits);
     try { await navigator.clipboard.writeText(txt); document.getElementById("copied").textContent = "Kopiert ✓"; }
@@ -353,7 +410,8 @@ async function watchExport(session, btn) {
 function planContext() {
   const ws = S.index.workouts;
   const km28 = ws.filter((w) => Date.now() - Date.parse(w.start) < 28 * A.DAY).reduce((s, w) => s + w.distanceM / 1000, 0);
-  return { vdot: A.estimateVdot(ws, S.profile), weeklyKm: km28 / 4 || null, profile: S.profile, goalText: store.get("goalText", ""), lastType: store.get("lastType", null) };
+  const fitness = A.estimateFitness(ws, S.profile);
+  return { vdot: fitness?.vdot ?? null, fitness, weeklyKm: km28 / 4 || null, profile: S.profile, goalText: store.get("goalText", ""), lastType: store.get("lastType", null) };
 }
 
 function parseTimeInput(v) {
@@ -594,6 +652,7 @@ function viewSettings() {
       <h3 style="margin:18px 0 6px">Herzfrequenzbereiche</h3>
       <div class="hr-list">${rows.map(([l, v], i) => `<div><span><i class="zdot" style="--c:var(--z${i + 1})"></i>${l}</span><b>${v}</b></div>`).join("")}</div>
       <p class="small muted">Quelle: Ruhe ${esc(p.restHrSource)}, Maximum ${esc(p.maxHrSource)}.${latest ? ` Letzter Ruhepuls aus Health: ${latest[1]} BPM (${fmtDate(latest[0])}).` : ""} Diese Zonen gelten überall auf der Website und im Watch-Export.</p>
+      ${p.watchMaxHr && p.maxHr > p.watchMaxHr ? `<div class="notice" style="--c:var(--warning)">Du hast in deinen Läufen schon ${p.maxHr} BPM erreicht, deine Watch rechnet aber noch mit ${p.watchMaxHr} BPM. Damit die Zonen auf der Uhr gleich sind: iPhone → Watch-App → Training → Herzfrequenzbereiche → Maximum auf ${p.maxHr} stellen.</div>` : ""}
     </section>
     <section class="card"><h2>Wie die Note entsteht</h2>
       <p class="small" style="margin-top:0;line-height:1.5">Jeder Lauf bekommt fünf Teilnoten: <b>Intensität passend</b> (30 %, passt der Puls zum Trainingsziel?), <b>Effizienz</b> (25 %, Tempo pro Herzschlag im Vergleich zu deinen letzten 6 Wochen), <b>Belastungssteuerung</b> (20 %, die letzten 7 Tage im Vergleich zu den letzten 4 Wochen), <b>Gleichmäßigkeit</b> (15 %, Puls-Drift bzw. gleichmäßige Intervalle) und <b>Umfang</b> (10 %, wie geplant bzw. wie üblich). Wenn du einen Plan hast, wird jeder Lauf an der geplanten Einheit gemessen.</p>

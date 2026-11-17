@@ -61,16 +61,30 @@ export function restFromHealth(health, stand) {
   const vals = Object.entries(days).filter(([d]) => d.startsWith(key)).map(([, v]) => +v).filter((v) => v > 30);
   return vals.length >= 7 ? { value: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), month: key, n: vals.length } : null;
 }
+// Höchster Puls aus deinen Läufen der letzten 12 Monate. Genommen wird der zweithöchste Lauf-Maximalwert,
+// damit ein einzelner Messfehler des Sensors den Wert nicht hochtreibt.
+export function observedMaxHr(workouts = [], now = Date.now()) {
+  const vals = workouts
+    .filter((w) => now - Date.parse(w.start) < 365 * DAY && w.maxHr >= 120 && w.maxHr <= 225)
+    .map((w) => Math.round(w.maxHr))
+    .sort((a, b) => b - a);
+  if (vals.length < 2) return null;
+  return { value: vals[1], count: vals.filter((v) => v >= vals[1]).length };
+}
 export function buildProfile(config = {}, overrides = {}, workouts = [], health = null) {
   const w = config.watch || {};
   const fromHealth = restFromHealth(health, w.stand);
   const restHr = fromHealth?.value || Number(w.ruheHF) || Number(config.ruheHF) || 60;
-  const maxHr = Number(w.maxHF) || Number(config.maxHF) || 195;
+  const watchMax = Number(w.maxHF) || Number(config.maxHF) || null;
+  const seen = observedMaxHr(workouts);
+  const useSeen = seen && (!watchMax || seen.value > watchMax);
+  const maxHr = useSeen ? seen.value : watchMax || 195;
   return {
     name: overrides.name || config.name || "", maxHr, restHr,
     zones: appleZones(restHr, maxHr),
     restHrSource: fromHealth ? `Apple Health, Ø ${fromHealth.month}` : "Apple Watch",
-    maxHrSource: "Apple Watch",
+    maxHrSource: useSeen ? `aus deinen Läufen (${seen.count}× erreicht)` : watchMax ? "Apple Watch" : "Standardwert",
+    watchMaxHr: watchMax,
   };
 }
 
@@ -153,7 +167,7 @@ export function loadRatio(w, history, p) {
 }
 
 // ---------- Effizienz & Entkopplung ----------
-export const efficiency = (w) => (w.avgHr && w.distanceM ? (w.distanceM / (w.durationSec / 60)) / w.avgHr : null);
+export const efficiency = (w) => (w.avgHr && w.distanceM ? (flatDistance(w) / (w.durationSec / 60)) / w.avgHr : null);
 
 export function decoupling(w) {
   const s = w.streams;
@@ -230,25 +244,51 @@ export function trainingPaces(vdot) {
   };
 }
 
-// Schätzt die aktuelle Form aus den letzten Läufen (Puls-basiert, robust über Median)
-export function estimateVdot(workouts, p) {
-  const recent = workouts
-    .filter((w) => Date.now() - Date.parse(w.start) < 90 * DAY && w.distanceM > 2000 && w.durationSec > 600)
-    .slice(0, 15);
+// Höhenmeter herausrechnen: 1 m bergauf kostet etwa so viel wie 6 m in der Ebene.
+// (Bergab bringt weniger zurück, als bergauf kostet – deshalb nur der Anstieg.)
+export const HM_FACTOR = 6;
+export const flatDistance = (w) => w.distanceM + HM_FACTOR * (w.elevationGainM || 0);
+
+// Testlauf / Wettkampf: von Hand markiert (p.testIds) oder automatisch erkannt
+// (Ø-Puls ≥ 86 % der Reserve über 12–150 min, 3–43 km).
+export function isTestRun(w, p) {
+  if (p.testIds?.includes(w.id)) return true;
+  if (!w.avgHr || w.distanceM < 3000 || w.distanceM > 43000) return false;
+  if (w.durationSec < 12 * 60 || w.durationSec > 150 * 60) return false;
+  return hrrOf(w.avgHr, p) >= 0.86;
+}
+
+// Schätzt die aktuelle Form (VDOT) mit Spanne.
+// - Mit Testlauf/Wettkampf der letzten 120 Tage: der beste davon, enge Spanne.
+// - Sonst aus dem Puls deiner Trainingsläufe (Median). Die Spanne ist nach oben breiter,
+//   weil die App ohne Vollgas-Lauf nicht sehen kann, wie schnell du sein könntest.
+export function estimateFitness(workouts, p, now = Date.now()) {
+  const recent = workouts.filter((w) => now - Date.parse(w.start) < 90 * DAY && w.distanceM > 2000 && w.durationSec > 600).slice(0, 15);
   const hrEst = [];
-  let bestRace = 0;
   for (const w of recent) {
-    const v = w.distanceM / (w.durationSec / 60);
-    const vo2 = vo2AtSpeed(v);
-    if (w.avgHr) {
-      const f = hrrOf(w.avgHr, p);
-      if (f > 0.5 && f < 0.97) hrEst.push((vo2 - 3.5) / f + 3.5);
-      if (f >= 0.85) bestRace = Math.max(bestRace, vdotFromRace(w.distanceM, w.durationSec));
-    }
+    if (!w.avgHr || isTestRun(w, p)) continue;
+    const f = hrrOf(w.avgHr, p);
+    const vo2 = vo2AtSpeed(flatDistance(w) / (w.durationSec / 60));
+    if (f > 0.5 && f < 0.97) hrEst.push((vo2 - 3.5) / f + 3.5);
   }
-  const est = median(hrEst);
-  if (!est && !bestRace) return null;
-  return round(clamp(Math.max(est || 0, bestRace), 20, 85), 1);
+  const tests = workouts
+    .filter((w) => now - Date.parse(w.start) < 120 * DAY && isTestRun(w, p))
+    .map((w) => ({ id: w.id, start: w.start, distanceM: w.distanceM, durationSec: w.durationSec, manual: !!p.testIds?.includes(w.id), vdot: vdotFromRace(flatDistance(w), w.durationSec) }))
+    .sort((a, b) => b.vdot - a.vdot);
+  const hrVdot = median(hrEst);
+  const test = tests[0] || null;
+  if (test) {
+    // Liegt der Puls-Schnitt klar über dem Test, ist der Test schon älter oder war kein Vollgas
+    const v = hrVdot && hrVdot > test.vdot + 1.5 ? (test.vdot + hrVdot) / 2 : test.vdot;
+    return { vdot: round(clamp(v, 20, 85), 1), low: round(v - 0.7, 1), high: round(v + 0.7, 1), source: "test", test, n: hrEst.length };
+  }
+  if (!hrVdot) return null;
+  const v = clamp(hrVdot, 20, 85);
+  const spread = hrEst.length >= 8 ? 0.8 : 1.2;
+  return { vdot: round(v, 1), low: round(v - spread, 1), high: round(v + 2.5, 1), source: "puls", test: null, n: hrEst.length };
+}
+export function estimateVdot(workouts, p) {
+  return estimateFitness(workouts, p)?.vdot ?? null;
 }
 
 // ---------- Lauftyp erkennen ----------
@@ -262,6 +302,7 @@ export const TYPE_LABELS = {
 };
 
 export function classify(w, p, history) {
+  if (p.testIds?.includes(w.id)) return "race";
   const segs = fastSegments(w);
   if (segs.length >= 3 && segs.length <= 30) return "interval";
   const f = w.avgHr ? hrrOf(w.avgHr, p) : null;

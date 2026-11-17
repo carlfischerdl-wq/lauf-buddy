@@ -1,5 +1,5 @@
 // Ziel aus Freitext verstehen und daraus einen periodisierten Laufplan erzeugen.
-import { trainingPaces, vdotFromRace, predictTime, fmtPace, fmtDuration, hrAt, clamp, DAY, localDayKey } from "./analysis.js";
+import { trainingPaces, vdotFromRace, predictTime, fmtPace, fmtDuration, hrAt, hrrOf, classify, clamp, DAY, localDayKey } from "./analysis.js";
 
 const MONTHS = ["januar", "februar", "märz", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "dezember"];
 export const DOW = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -362,6 +362,7 @@ export function todaySession(text, ctx) {
 
   // Art des Trainings
   let kind =
+    /test|wettkampf|bestzeit|zeitlauf|vollgas/.test(tt) ? "test" :
     /berg|hügel|hill/.test(tt) ? "hills" :
     /fahrtspiel|fartlek/.test(tt) ? "fartlek" :
     /steigerung/.test(tt) ? "strides" :
@@ -379,7 +380,17 @@ export function todaySession(text, ctx) {
   }
 
   let s;
-  if (kind === "easy" || kind === "long") {
+  if (kind === "test") {
+    const dist = km && km >= 3 && km <= 21.1 ? km : 5;
+    const pred = predictTime(vdot, dist * 1000);
+    const pace = pred / dist;
+    s = { type: "race", title: `${String(dist).replace(".", ",")}-km-Testlauf`, distanceKm: dist + 3, paceText: `Start ≈ ${fmtPace(pace)} min/km, ab der Hälfte zulegen`, hrText: "Am Ende nahe am Maximalpuls",
+      desc: `${wuTxt}, vorher 3–4 kurze Steigerungen. Dann ${String(dist).replace(".", ",")} km so schnell, wie du das Tempo gleichmäßig halten kannst. ` +
+        `Die erste Hälfte nicht schneller als ${fmtPace(pace)} min/km – wenn es sich gut anfühlt, ab der Hälfte schneller werden. ` +
+        `Flache Strecke wählen, ausgeruht starten. Die App erkennt den Test meist von selbst; sonst beim Lauf auf „Als Testlauf markieren“ tippen.`,
+      struct: W([{ reps: 1, steps: [{ p: "work", dist_m: Math.round(dist * 1000), pace: [Math.round(pace - 30), Math.round(pace + 8)], keep: true }] }]) };
+    s.testPredSec = Math.round(pred);
+  } else if (kind === "easy" || kind === "long") {
     const dist = km || (min ? (min * 60) / easyMid : kind === "long" ? 12 : 6);
     s = { type: kind, title: kind === "long" ? "Langer Lauf" : "Lockerer Lauf", distanceKm: dist, paceText: `${fmtPace(E[0])}–${fmtPace(E[1])} min/km`, hrText: z2,
       desc: kind === "long" ? "Ruhig und gleichmäßig – Dauer zählt, nicht Tempo." : "Entspannt, du kannst dich dabei unterhalten.", struct: null, mPartKm: 0 };
@@ -427,7 +438,9 @@ export function todaySession(text, ctx) {
       struct: W([{ reps: n, steps: [work, { p: "recovery", time_s: recSec }] }]) };
   }
   s.distanceKm = Math.round(s.distanceKm * 2) / 2;
-  s.durationMin = Math.round((s.distanceKm * easyMid * (s.type === "easy" || s.type === "long" ? 1 : 0.9)) / 60 / 5) * 5;
+  s.durationMin = s.testPredSec
+    ? Math.round((s.testPredSec + 3 * easyMid + 180) / 60 / 5) * 5
+    : Math.round((s.distanceKm * easyMid * (s.type === "easy" || s.type === "long" ? 1 : 0.9)) / 60 / 5) * 5;
   s.easyPace = easyPace;
   const today = new Date();
   s.date = localDayKey(today);
@@ -508,6 +521,8 @@ export function finalizeStruct(s, ov = {}) {
     }
     if (ov.workZone && (x.pace || !x.easy)) { x.hrZone = ov.workZone; delete x.pace; continue; }
     if (!x.pace) continue;
+    if (x.keep && !ov.paceRange && !ov.pace && !ov.width) { delete x.keep; x.exact = true; x.metric = ov.metric || "average"; continue; }
+    delete x.keep;
     const w = ov.width || (x.easy ? 20 : 10);
     let lo, hi;
     if (ov.paceRange && !(x.easy && b.steps.length > 1 && st.blocks.length > 1)) [lo, hi] = ov.paceRange;
@@ -538,4 +553,109 @@ export function describeStruct(st) {
   }
   if (st.cooldown) lines.push(`Auslaufen: ${st.cooldown.open ? "offen" : goal(st.cooldown)}`);
   return lines;
+}
+
+// ---------- 4) Persönliche Empfehlung für den nächsten Lauf ----------
+// Schaut auf deine letzten Wochen (harte/lockere Läufe, langer Lauf, Abstand zur letzten harten Einheit,
+// Testlauf vorhanden?) und schlägt eine konkrete Einheit vor – mit Begründung.
+// ctx: { profile, vdot, fitness, plan, typeOf?: (w) => Lauftyp }
+const HARD = ["interval", "tempo", "race"];
+const dayDiff = (a, b) => Math.round((Date.parse(a + "T12:00:00") - Date.parse(b + "T12:00:00")) / DAY);
+const fmtDay = (iso) => new Date(iso).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "numeric" });
+const TYPE_DE = { recovery: "Regenerationslauf", easy: "lockerer Lauf", long: "langer Lauf", tempo: "Tempolauf", interval: "Intervalltraining", race: "Test/Wettkampf" };
+
+export function recommendNext(workouts, ctx, nowArg) {
+  const now = nowArg ? new Date(nowArg) : new Date();
+  const T = now.getTime();
+  const p = ctx.profile;
+  const ws = workouts.filter((w) => Date.parse(w.start) <= T).sort((a, b) => Date.parse(b.start) - Date.parse(a.start));
+  if (!ws.length) return null;
+  const typeOf = ctx.typeOf || ((w) => classify(w, p, ws.filter((h) => Date.parse(h.start) < Date.parse(w.start))));
+  const runs = ws.filter((w) => T - Date.parse(w.start) < 28 * DAY).map((w) => ({ w, type: typeOf(w), day: localDayKey(w.start) }));
+  const todayKey = localDayKey(now);
+  const ranToday = runs[0]?.day === todayKey;
+  const target = ranToday ? localDayKey(new Date(T + DAY)) : todayKey;
+  const when = ranToday ? "morgen" : "heute";
+  const ago = (r) => dayDiff(target, r.day);
+
+  // Plan hat Vorrang
+  const planned = ctx.plan ? plannedFor(ctx.plan, target) : null;
+  if (planned) return { when, target, title: planned.title, session: planned, reasons: ["Steht so in deinem Trainingsplan."], hint: null };
+
+  const last = runs[0] || { w: ws[0], type: typeOf(ws[0]), day: localDayKey(ws[0].start) };
+  const in7 = runs.filter((r) => ago(r) <= 7);
+  const hard7 = in7.filter((r) => HARD.includes(r.type));
+  const lastHard = runs.find((r) => HARD.includes(r.type));
+  const lastLong = runs.find((r) => r.type === "long" || r.w.durationSec >= 70 * 60);
+  const sinceHard = lastHard ? ago(lastHard) : 99;
+  const longest28 = Math.max(0, ...runs.map((r) => r.w.distanceM / 1000));
+  const durs = runs.map((r) => r.w.durationSec / 60).sort((a, b) => a - b);
+  const easyMin = clamp(Math.round((durs[Math.floor(durs.length / 2)] || 40) * 0.85 / 5) * 5, 30, 50);
+  const z2 = hrAt(0.7, p);
+  const km7 = in7.reduce((s, r) => s + r.w.distanceM / 1000, 0);
+  const fit = ctx.fitness;
+  const hadTest28 = runs.some((r) => r.type === "race");
+
+  // Wie viele Läufe waren wirklich locker? (Ø-Puls in Zone 1–2)
+  const in14 = runs.filter((r) => ago(r) <= 14 && r.w.avgHr);
+  const easyN = in14.filter((r) => hrrOf(r.w.avgHr, p) < 0.7).length;
+  const hint = in14.length >= 4 && easyN / in14.length < 0.5
+    ? `Nur ${easyN} von ${in14.length} Läufen der letzten 2 Wochen ${easyN === 1 ? "war" : "waren"} locker (Ø-Puls unter ${z2} bpm). Faustregel für schnellere Zeiten: etwa 80 % locker, 20 % hart – die lockeren Läufe bauen die Ausdauer, auf der die harten aufsetzen.`
+    : null;
+
+  const reasons = [];
+  let req, title;
+  const lastTxt = `${fmtDay(last.w.start)}: ${TYPE_DE[last.type] || "Lauf"}, ${(last.w.distanceM / 1000).toFixed(1).replace(".", ",")} km${last.w.avgHr ? ` mit Ø ${Math.round(last.w.avgHr)} bpm` : ""}`;
+
+  const runDays = new Set(runs.map(ago));
+  const threeInRow = runDays.has(1) && runDays.has(2) && runDays.has(3);
+  if (hard7.length >= 3 || threeInRow) {
+    title = "Ruhetag";
+    reasons.push(hard7.length >= 3
+      ? `In den letzten 7 Tagen hattest du schon ${hard7.length} harte Einheiten. Stärker wirst du in der Erholung, nicht im Training.`
+      : "Du bist drei Tage hintereinander gelaufen – gönn dir einen Tag Pause.");
+    reasons.push(`Wenn du unbedingt laufen willst: höchstens ${Math.min(30, easyMin)} min ganz locker unter ${z2} bpm.`);
+    return { when, target, title, session: null, reasons, hint, facts: { km7, hard7: hard7.length } };
+  }
+
+  if (lastHard && sinceHard <= 1) {
+    req = `lockere ${easyMin} min`;
+    reasons.push(`Dein letzter Lauf war hart (${lastTxt}). Nach einer harten Einheit braucht der Körper rund 48 Stunden, bis er davon profitiert.`);
+    reasons.push(`Locker heißt: Puls unter ${z2} bpm – auch wenn sich das langsam anfühlt. Lieber mal ein Stück gehen als drüber.`);
+  } else if (last.type === "long" && ago(last) <= 1) {
+    req = `lockere ${Math.min(easyMin, 35)} min`;
+    reasons.push(`Gestern war dein langer Lauf (${lastTxt}). Heute nur kurz und locker, damit sich die Beine erholen.`);
+  } else if (hard7.length >= 2) {
+    if (!lastLong || ago(lastLong) >= 6) {
+      const km = clamp(Math.round(Math.max(longest28 * 1.05, 8)), 8, Math.max(10, Math.round(longest28 + 2)));
+      req = `langer lauf ${km} km`;
+      reasons.push(`Du hattest diese Woche schon ${hard7.length} harte Einheiten, dein letzter langer Lauf ist aber ${lastLong ? `${ago(lastLong)} Tage her` : "schon länger her"}. Der lange Lauf ist die wichtigste Einheit für 10 km und Halbmarathon.`);
+      reasons.push(`Ganz ruhig, Puls unter ${z2} bpm. Längster Lauf der letzten 4 Wochen: ${longest28.toFixed(1).replace(".", ",")} km.`);
+    } else {
+      req = `lockere ${easyMin} min`;
+      reasons.push(`Du hattest diese Woche schon ${hard7.length} harte Einheiten (zuletzt ${fmtDay(lastHard.w.start)}). Mehr Intensität bringt jetzt weniger als Erholung.`);
+    }
+  } else if (!lastLong || ago(lastLong) >= 6) {
+    const km = clamp(Math.round(Math.max(longest28 * 1.05, 8)), 8, Math.max(10, Math.round(longest28 + 2)));
+    req = `langer lauf ${km} km`;
+    reasons.push(`Dein letzter langer Lauf ist ${lastLong ? `${ago(lastLong)} Tage her (${fmtDay(lastLong.w.start)})` : "schon länger her"}. Einmal pro Woche lang und ruhig ist die Basis für schnellere Zeiten.`);
+    reasons.push(`Puls unter ${z2} bpm – Dauer zählt, nicht Tempo. Längster Lauf der letzten 4 Wochen: ${longest28.toFixed(1).replace(".", ",")} km.`);
+  } else if (fit && fit.source !== "test" && !hadTest28) {
+    req = "5 km test";
+    reasons.push(`Deine Prognose beruht bisher nur auf Pulswerten aus dem Training – deshalb die breite Spanne. Ein 5-km-Test zeigt, was wirklich drin ist.`);
+    reasons.push(`Danach richten sich Prognose und alle Trainingstempi nach deinem echten Ergebnis. Letzte harte Einheit: ${lastHard ? `vor ${sinceHard} Tagen` : "keine in den letzten 4 Wochen"} – du bist ausgeruht genug.`);
+  } else {
+    const wasTempo = lastHard?.type === "tempo";
+    const weekly = runs.reduce((s, r) => s + r.w.distanceM / 1000, 0) / Math.max(1, Math.min(4, (T - Date.parse(runs.at(-1).w.start)) / (7 * DAY)));
+    req = wasTempo ? (weekly < 20 ? "5x800 m" : "5x1000 m") : weekly < 20 ? "3x8 min tempo" : "3x10 min tempo";
+    reasons.push(lastHard
+      ? `Letzte harte Einheit vor ${sinceHard} Tagen (${TYPE_DE[lastHard.type]}) – du bist bereit für die nächste. Diesmal ${wasTempo ? "Intervalle für die Geschwindigkeit" : "Schwellentempo für die Ausdauer bei hohem Tempo"}, damit sich die Reize abwechseln.`
+      : "Seit über einer Woche keine harte Einheit – Zeit für einen Tempo-Reiz.");
+    reasons.push(`Umfang passend zu deinen ${Math.round(weekly)} km pro Woche.`);
+  }
+
+  const session = todaySession(req, { ...ctx, profile: p });
+  session.date = target;
+  session.reason = "";
+  return { when, target, title: session.title, session, reasons, hint, facts: { km7, hard7: hard7.length, sinceHard, easyN, n14: in14.length } };
 }
