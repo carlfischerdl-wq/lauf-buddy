@@ -155,7 +155,9 @@ async function main() {
   for (const file of files) {
     const f = path.basename(file);
     try {
-      const raw = JSON.parse(await readFile(file, "utf8"));
+      const txt = (await readFile(file, "utf8")).trim();
+      if (!txt) { console.log(`${f} ist leer – gelöscht.`); await unlink(file); continue; }
+      const raw = JSON.parse(txt);
       const metrics = raw?.data?.metrics ?? raw?.metrics;
       if (Array.isArray(metrics)) healthAdded += mergeMetrics(health, metrics);
       const list = raw?.data?.workouts ?? raw?.workouts ?? (metrics ? [] : Array.isArray(raw) ? raw : [raw]);
