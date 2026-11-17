@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lern-Buddy</title>
+  <meta name="description" content="Lernzeit mit einem Knopfdruck erfassen – mit Pomodoro und Statistiken.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Lern-Buddy">
+  <meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151514" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="top">
+    <b>Lern-Buddy</b>
+  </header>
+  <main id="app"></main>
+  <nav class="tabs">
+    <a href="#/" data-tab="home"><span aria-hidden="true">⏱</span>Lernen</a>
+    <a href="#/statistik" data-tab="stats"><span aria-hidden="true">📊</span>Statistik</a>
+    <a href="#/einstellungen" data-tab="settings"><span aria-hidden="true">⚙︎</span>Einstellungen</a>
+  </nav>
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>
