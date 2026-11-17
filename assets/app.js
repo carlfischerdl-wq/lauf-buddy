@@ -303,7 +303,6 @@ function kmSplits(w) {
 function claudeText(w, a, splits) {
   const p = S.profile;
   return [
-    `Bitte analysiere meinen Lauf und gib mir konkrete Tipps.`,
     `Datum: ${fmtDate(w.start, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}, ${fmtTime(w.start)}`,
     a.summary,
     `Erkannter Typ: ${a.typeLabel}. Note vom Lauf-Buddy: ${num(a.score)}/10 (${a.headline}).`,
@@ -364,23 +363,67 @@ async function viewRun(id) {
       ${lineChart({ xs: mins, ys: smooth, xTicks: tTicks, yMin: pv[Math.floor(pv.length * 0.02)] - 10, yMax: pv[Math.floor(pv.length * 0.98)] + 10, invert: true, fmtY: A.fmtPace,
         tip: (i) => `${Math.round(mins[i])} min · ${A.fmtPace(smooth[i])}/km` })}
       <div class="small muted">Oben = schneller.</div></section>` : ""}
-    ${splits.length ? `<section class="card"><h2>Kilometer</h2><table class="paces">${splits.map((x) => `<tr><td>km ${x.km}</td><td>${x.hr ? x.hr + " bpm" : ""}</td><td>${A.fmtPace(x.sec)} /km</td></tr>`).join("")}</table></section>` : ""}
-    <section class="card"><h2>Tiefere Analyse mit Claude</h2>
-      <p class="small" style="margin-top:0">Kopiert eine Zusammenfassung dieses Laufs. Füge sie im Claude-Chat ein und frag nach Tipps.</p>
-      <button class="btn" id="copy">Für Claude kopieren</button> <span id="copied" class="small muted"></span>
-    </section>`;
+    ${splits.length ? `<section class="card"><h2>Kilometer</h2><table class="paces">${splits.map((x) => `<tr><td>km ${x.km}</td><td>${x.hr ? x.hr + " bpm" : ""}</td><td>${A.fmtPace(x.sec)} /km</td></tr>`).join("")}</table></section>` : ""}`;
+  S.pageCtx = { title: `Diesen Lauf im Detail (${fmtDate(w.start, { day: "numeric", month: "numeric" })})`, text: claudeText(w, a, splits), placeholder: "z. B. „Was hältst du von diesem Lauf?“ oder „Warum stieg mein Puls ab km 5?“" };
   const tt = document.getElementById("test-toggle");
   if (tt) tt.onclick = () => {
     const ids = new Set(S.profile.testIds);
     if (ids.has(w.id)) ids.delete(w.id); else ids.add(w.id);
     S.profile.testIds = [...ids];
     store.set("tests", S.profile.testIds);
-    viewRun(id);
+    viewRun(id).then(mountAsk);
   };
-  document.getElementById("copy").onclick = async () => {
-    const txt = claudeText(w, a, splits);
-    try { await navigator.clipboard.writeText(txt); document.getElementById("copied").textContent = "Kopiert ✓"; }
-    catch { prompt("Text kopieren:", txt); }
+}
+
+// ---------- Frag Claude (öffnet claude.ai bzw. die Claude-App, läuft über dein Claude-Abo) ----------
+const TYPE_SHORT = { recovery: "Regeneration", easy: "locker", long: "lang", tempo: "Tempo", interval: "Intervalle", race: "Test/Wettkampf" };
+function claudeContext() {
+  const p = S.profile, ws = S.index.workouts;
+  const recent = ws.filter((w) => Date.now() - Date.parse(w.start) < 42 * A.DAY).slice(0, 14);
+  const fit = A.estimateFitness(ws, p);
+  const plan = store.get("plan");
+  let rec = null;
+  try { rec = P.recommendNext(ws, { ...planContext(), plan }); } catch {}
+  const zb = A.zoneBounds(p);
+  const lines = [
+    `Profil: Max-HF ${p.maxHr} (${p.maxHrSource}), Ruhe-HF ${p.restHr}. Pulszonen: ${zb.map((z) => `Z${z.z} ${z.hrFrom}–${z.hrTo}`).join(", ")}.`,
+    fit ? `Form (VDOT nach Daniels): ${num(fit.vdot)} (${fit.source === "test" ? "aus Testlauf" : "nur aus Trainingspuls geschätzt, noch kein Testlauf"}). Prognose: 5 km ${A.fmtDuration(A.predictTime(fit.high, 5000))}–${A.fmtDuration(A.predictTime(fit.low, 5000))}, 10 km ${A.fmtDuration(A.predictTime(fit.high, 10000))}–${A.fmtDuration(A.predictTime(fit.low, 10000))}, HM ${A.fmtDuration(A.predictTime(fit.high, 21097.5))}–${A.fmtDuration(A.predictTime(fit.low, 21097.5))}.` : "",
+    store.get("goalText") ? `Mein Ziel: ${store.get("goalText")}` : "",
+    plan ? `Aktiver Plan: ${plan.title}.` : "",
+    rec ? `Empfehlung der App für ${rec.when}: ${rec.title}${rec.session ? ` (${rec.session.paceText}, ${rec.session.hrText})` : ""}. Begründung: ${rec.reasons.join(" ")}` : "",
+    `Meine Läufe der letzten 6 Wochen (neueste zuerst):`,
+    ...recent.map((w) => {
+      const t = A.classify(w, p, ws.filter((h) => h.start < w.start));
+      return `- ${fmtDate(w.start, { weekday: "short", day: "numeric", month: "numeric" })}: ${A.fmtKm(w.distanceM)} km in ${A.fmtDuration(w.durationSec)} (${A.fmtPace(A.paceOf(w))}/km)${w.avgHr ? `, Ø ${Math.round(w.avgHr)}/max ${Math.round(w.maxHr)} bpm` : ""}${w.elevationGainM ? `, ${Math.round(w.elevationGainM)} Hm` : ""}, ${TYPE_SHORT[t] || t}`;
+    }),
+  ];
+  return lines.filter(Boolean).join("\n");
+}
+function askHtml() {
+  const ctx = S.pageCtx;
+  return `<section class="card" id="ask"><h2>Frag Claude</h2>
+    <textarea id="ask-q" style="min-height:72px" placeholder="${esc(ctx?.placeholder || "z. B. „Wie werde ich auf 10 km schneller?“ oder „Ist mein Puls bei lockeren Läufen zu hoch?“")}"></textarea>
+    ${ctx ? `<label class="small" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="ask-page" checked style="width:auto"> ${esc(ctx.title)} mitschicken</label>` : ""}
+    <div class="actions"><button class="btn" id="ask-go">In Claude fragen ↗</button></div>
+    <p class="small muted" style="margin:8px 0 0;line-height:1.4">Öffnet Claude mit deiner Frage und deinen Laufdaten – läuft über dein Claude-Abo. Der Text liegt zusätzlich in der Zwischenablage, falls das Eingabefeld leer bleibt.</p>
+  </section>`;
+}
+function mountAsk() {
+  if (S.demo || !S.index?.workouts?.length) return;
+  document.getElementById("ask")?.remove();
+  $app.insertAdjacentHTML("beforeend", askHtml());
+  document.getElementById("ask-go").onclick = () => {
+    const q = document.getElementById("ask-q").value.trim() || "Schau dir meine Daten an: Was läuft gut, was sollte ich ändern, und was wäre mein sinnvollster nächster Lauf?";
+    const withPage = S.pageCtx && document.getElementById("ask-page")?.checked;
+    const text = [
+      q, "",
+      "Kontext: Ich bin Hobbyläufer und nutze meine eigene Lauf-App „Lauf-Buddy“ (Daten von der Apple Watch). Antworte bitte auf Deutsch, konkret und auf meine Daten bezogen.", "",
+      claudeContext(),
+      withPage ? `\n${S.pageCtx.title}:\n${S.pageCtx.text}` : "",
+    ].join("\n");
+    // Erst öffnen (muss direkt im Klick passieren), dann kopieren
+    window.open("https://claude.ai/new?q=" + encodeURIComponent(text), "_blank");
+    navigator.clipboard?.writeText(text).catch(() => {});
   };
 }
 
@@ -591,6 +634,7 @@ function viewGoal() {
     const pl = P.generatePlan(goal, planContext());
     store.set("plan", pl);
     viewGoal();
+    mountAsk();
     document.getElementById("plan").scrollIntoView({ behavior: "smooth", block: "start" });
   };
   document.getElementById("parse").onclick = () => {
@@ -629,7 +673,7 @@ function viewGoal() {
     watchExport(plan.weeks[wi].sessions[si], b);
   }));
   const del = document.getElementById("del-plan");
-  if (del) del.onclick = () => { if (confirm("Plan wirklich löschen?")) { store.del("plan"); viewGoal(); } };
+  if (del) del.onclick = () => { if (confirm("Plan wirklich löschen?")) { store.del("plan"); viewGoal(); mountAsk(); } };
 }
 
 function viewSettings() {
@@ -669,12 +713,14 @@ async function route() {
   const tab = { "": "home", laeufe: "runs", lauf: "runs", ziel: "goal", einstellungen: "settings" }[page] || "home";
   document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("active", a.dataset.tab === tab));
   $tip.hidden = true;
+  S.pageCtx = null;
   try {
     if (page === "laeufe") await viewRuns();
     else if (page === "lauf") await viewRun(arg);
     else if (page === "ziel") viewGoal();
     else if (page === "einstellungen") viewSettings();
     else await viewHome();
+    mountAsk();
   } catch (e) {
     console.error(e);
     $app.innerHTML = `<section class="card"><h2>Fehler</h2><p class="small">${esc(e.message)}</p></section>`;
