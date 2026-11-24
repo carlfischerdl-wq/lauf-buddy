@@ -1,6 +1,23 @@
 {
- "lastSync": "2026-11-23T12:24:50.675Z",
+ "lastSync": "2026-11-24T19:26:55.348Z",
  "workouts": [
+  {
+   "id": "B6DC97BE-BB88-4DC4-A98A-FC721305A2CB",
+   "source": "health-auto-export",
+   "name": "Outdoor Laufen",
+   "type": "Outdoor Laufen",
+   "start": "2026-11-24T18:34:56.000Z",
+   "startLocal": "2026-11-24T18:34:56.000Z",
+   "durationSec": 3056,
+   "elapsedSec": 3063,
+   "distanceM": 8011,
+   "elevationGainM": null,
+   "avgHr": 164.8,
+   "maxHr": 192,
+   "avgCadence": null,
+   "calories": 778,
+   "hasStreams": true
+  },
   {
    "id": "B0EFC816-055F-4C56-AD62-AD9C7D608B58",
    "source": "health-auto-export",
