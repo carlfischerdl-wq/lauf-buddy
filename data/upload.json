@@ -1,0 +1,2088 @@
+{
+  "data" : {
+    "workouts" : [
+      {
+        "location" : "Outdoor",
+        "humidity" : {
+          "qty" : 75,
+          "units" : "%"
+        },
+        "splits" : [
+          {
+            "boundaryOrigin" : "distanceInterpolation",
+            "distanceType" : "walkingRunning",
+            "targetDistance" : {
+              "units" : "km",
+              "qty" : 1
+            },
+            "items" : [
+              {
+                "elapsedDuration" : 395.25437915325165,
+                "isPartial" : false,
+                "activeDuration" : 395.25437915325165,
+                "index" : 1,
+                "boundaryOrigin" : "distanceInterpolation",
+                "end" : "2026-11-26 11:34:27 +0100",
+                "start" : "2026-11-26 11:27:51 +0100",
+                "metrics" : {
+                  "heartRateMaximum" : {
+                    "origin" : "sampleSummary",
+                    "units" : "bpm",
+                    "sampleCount" : 77,
+                    "qty" : 164
+                  },
+                  "heartRateMinimum" : {
+                    "units" : "bpm",
+                    "qty" : 118,
+                    "origin" : "sampleSummary",
+                    "sampleCount" : 77
+                  },
+                  "speed" : {
+                    "units" : "m\/s",
+                    "qty" : 2.5300162445822538,
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "paceKilometre" : {
+                    "units" : "s\/km",
+                    "origin" : "activeTimeCalculation",
+                    "qty" : 395.25437915325165
+                  },
+                  "heartRateAverage" : {
+                    "sampleCount" : 77,
+                    "units" : "bpm",
+                    "qty" : 150.77922077922079,
+                    "origin" : "sampleSummary"
+                  },
+                  "distance" : {
+                    "units" : "m",
+                    "coveredDuration" : 395.25437915325165,
+                    "origin" : "sampleOverlapEstimate",
+                    "qty" : 1000
+                  },
+                  "paceMile" : {
+                    "origin" : "activeTimeCalculation",
+                    "qty" : 636.10026356401056,
+                    "units" : "s\/mi"
+                  },
+                  "activeEnergy" : {
+                    "origin" : "sampleOverlapEstimate",
+                    "qty" : 96.42569961358339,
+                    "units" : "kcal",
+                    "coveredDuration" : 395.25437915325165
+                  }
+                },
+                "boundaryKind" : "interval"
+              },
+              {
+                "start" : "2026-11-26 11:34:27 +0100",
+                "boundaryOrigin" : "distanceInterpolation",
+                "end" : "2026-11-26 11:41:28 +0100",
+                "index" : 2,
+                "activeDuration" : 421.32302474975586,
+                "elapsedDuration" : 421.32302474975586,
+                "isPartial" : false,
+                "metrics" : {
+                  "heartRateMinimum" : {
+                    "sampleCount" : 85,
+                    "qty" : 136,
+                    "units" : "bpm",
+                    "origin" : "sampleSummary"
+                  },
+                  "paceKilometre" : {
+                    "origin" : "activeTimeCalculation",
+                    "qty" : 421.32302474975586,
+                    "units" : "s\/km"
+                  },
+                  "paceMile" : {
+                    "units" : "s\/mi",
+                    "qty" : 678.05368194287109,
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "heartRateAverage" : {
+                    "origin" : "sampleSummary",
+                    "units" : "bpm",
+                    "sampleCount" : 85,
+                    "qty" : 157.62352941176471
+                  },
+                  "speed" : {
+                    "origin" : "activeTimeCalculation",
+                    "units" : "m\/s",
+                    "qty" : 2.3734757923423446
+                  },
+                  "heartRateMaximum" : {
+                    "units" : "bpm",
+                    "origin" : "sampleSummary",
+                    "sampleCount" : 85,
+                    "qty" : 168
+                  },
+                  "activeEnergy" : {
+                    "units" : "kcal",
+                    "qty" : 97.284173684778978,
+                    "coveredDuration" : 421.32302474975586,
+                    "origin" : "sampleOverlapEstimate"
+                  },
+                  "distance" : {
+                    "units" : "m",
+                    "coveredDuration" : 421.32302474975586,
+                    "origin" : "sampleOverlapEstimate",
+                    "qty" : 1000
+                  }
+                },
+                "boundaryKind" : "interval"
+              },
+              {
+                "metrics" : {
+                  "speed" : {
+                    "origin" : "activeTimeCalculation",
+                    "qty" : 2.4054642180117622,
+                    "units" : "m\/s"
+                  },
+                  "heartRateMinimum" : {
+                    "sampleCount" : 82,
+                    "origin" : "sampleSummary",
+                    "units" : "bpm",
+                    "qty" : 151
+                  },
+                  "heartRateAverage" : {
+                    "origin" : "sampleSummary",
+                    "units" : "bpm",
+                    "sampleCount" : 82,
+                    "qty" : 163.21951219512195
+                  },
+                  "paceKilometre" : {
+                    "qty" : 415.7201726436615,
+                    "origin" : "activeTimeCalculation",
+                    "units" : "s\/km"
+                  },
+                  "heartRateMaximum" : {
+                    "sampleCount" : 82,
+                    "qty" : 174,
+                    "origin" : "sampleSummary",
+                    "units" : "bpm"
+                  },
+                  "paceMile" : {
+                    "origin" : "activeTimeCalculation",
+                    "units" : "s\/mi",
+                    "qty" : 669.0367655230408
+                  },
+                  "activeEnergy" : {
+                    "units" : "kcal",
+                    "coveredDuration" : 415.7201726436615,
+                    "qty" : 102.87202776942223,
+                    "origin" : "sampleOverlapEstimate"
+                  },
+                  "distance" : {
+                    "units" : "m",
+                    "origin" : "sampleOverlapEstimate",
+                    "qty" : 1000,
+                    "coveredDuration" : 415.7201726436615
+                  }
+                },
+                "boundaryOrigin" : "distanceInterpolation",
+                "boundaryKind" : "interval",
+                "index" : 3,
+                "start" : "2026-11-26 11:41:28 +0100",
+                "elapsedDuration" : 415.7201726436615,
+                "activeDuration" : 415.7201726436615,
+                "isPartial" : false,
+                "end" : "2026-11-26 11:48:24 +0100"
+              },
+              {
+                "end" : "2026-11-26 11:55:50 +0100",
+                "boundaryOrigin" : "distanceInterpolation",
+                "index" : 4,
+                "boundaryKind" : "interval",
+                "activeDuration" : 446.72724723815918,
+                "isPartial" : false,
+                "metrics" : {
+                  "paceMile" : {
+                    "units" : "s\/mi",
+                    "qty" : 718.93781497924806,
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "distance" : {
+                    "qty" : 1000,
+                    "coveredDuration" : 446.72724723815918,
+                    "units" : "m",
+                    "origin" : "sampleOverlapEstimate"
+                  },
+                  "heartRateAverage" : {
+                    "qty" : 151.1888888888889,
+                    "units" : "bpm",
+                    "sampleCount" : 90,
+                    "origin" : "sampleSummary"
+                  },
+                  "speed" : {
+                    "units" : "m\/s",
+                    "origin" : "activeTimeCalculation",
+                    "qty" : 2.2385023662254477
+                  },
+                  "activeEnergy" : {
+                    "origin" : "sampleOverlapEstimate",
+                    "units" : "kcal",
+                    "coveredDuration" : 446.72724723815918,
+                    "qty" : 85.011626422818097
+                  },
+                  "paceKilometre" : {
+                    "qty" : 446.72724723815918,
+                    "units" : "s\/km",
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "heartRateMaximum" : {
+                    "origin" : "sampleSummary",
+                    "qty" : 176,
+                    "sampleCount" : 90,
+                    "units" : "bpm"
+                  },
+                  "heartRateMinimum" : {
+                    "qty" : 130,
+                    "origin" : "sampleSummary",
+                    "units" : "bpm",
+                    "sampleCount" : 90
+                  }
+                },
+                "start" : "2026-11-26 11:48:24 +0100",
+                "elapsedDuration" : 446.72724723815918
+              },
+              {
+                "start" : "2026-11-26 11:55:50 +0100",
+                "activeDuration" : 441.49114465713501,
+                "isPartial" : false,
+                "boundaryKind" : "interval",
+                "boundaryOrigin" : "distanceInterpolation",
+                "index" : 5,
+                "elapsedDuration" : 441.49114465713501,
+                "metrics" : {
+                  "speed" : {
+                    "qty" : 2.2650510935538848,
+                    "origin" : "activeTimeCalculation",
+                    "units" : "m\/s"
+                  },
+                  "heartRateAverage" : {
+                    "origin" : "sampleSummary",
+                    "units" : "bpm",
+                    "qty" : 152.97752808988764,
+                    "sampleCount" : 89
+                  },
+                  "activeEnergy" : {
+                    "qty" : 88.351789410724336,
+                    "coveredDuration" : 441.49114465713501,
+                    "origin" : "sampleOverlapEstimate",
+                    "units" : "kcal"
+                  },
+                  "heartRateMaximum" : {
+                    "origin" : "sampleSummary",
+                    "qty" : 173,
+                    "units" : "bpm",
+                    "sampleCount" : 89
+                  },
+                  "paceMile" : {
+                    "origin" : "activeTimeCalculation",
+                    "qty" : 710.51112470709234,
+                    "units" : "s\/mi"
+                  },
+                  "heartRateMinimum" : {
+                    "sampleCount" : 89,
+                    "units" : "bpm",
+                    "qty" : 136,
+                    "origin" : "sampleSummary"
+                  },
+                  "paceKilometre" : {
+                    "qty" : 441.49114465713501,
+                    "units" : "s\/km",
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "distance" : {
+                    "origin" : "sampleOverlapEstimate",
+                    "coveredDuration" : 441.49114465713501,
+                    "qty" : 1000,
+                    "units" : "m"
+                  }
+                },
+                "end" : "2026-11-26 12:03:12 +0100"
+              },
+              {
+                "boundaryOrigin" : "distanceInterpolation",
+                "isPartial" : true,
+                "end" : "2026-11-26 12:03:21 +0100",
+                "start" : "2026-11-26 12:03:12 +0100",
+                "metrics" : {
+                  "heartRateMaximum" : {
+                    "qty" : 158,
+                    "origin" : "sampleSummary",
+                    "units" : "bpm",
+                    "sampleCount" : 1
+                  },
+                  "paceMile" : {
+                    "qty" : 1426.0282126725422,
+                    "origin" : "activeTimeCalculation",
+                    "units" : "s\/mi"
+                  },
+                  "activeEnergy" : {
+                    "units" : "kcal",
+                    "coveredDuration" : 3.7075486183166504,
+                    "qty" : 0.98108399943208724,
+                    "origin" : "sampleOverlapEstimate"
+                  },
+                  "paceKilometre" : {
+                    "origin" : "activeTimeCalculation",
+                    "qty" : 886.09285067241194,
+                    "units" : "s\/km"
+                  },
+                  "heartRateMinimum" : {
+                    "qty" : 158,
+                    "origin" : "sampleSummary",
+                    "sampleCount" : 1,
+                    "units" : "bpm"
+                  },
+                  "speed" : {
+                    "units" : "m\/s",
+                    "qty" : 1.1285499022378405,
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "heartRateAverage" : {
+                    "sampleCount" : 1,
+                    "origin" : "sampleSummary",
+                    "units" : "bpm",
+                    "qty" : 158
+                  },
+                  "distance" : {
+                    "origin" : "sampleOverlapEstimate",
+                    "units" : "m",
+                    "qty" : 10.065837428624945,
+                    "coveredDuration" : 3.7075487375259399
+                  }
+                },
+                "activeDuration" : 8.9192665815353394,
+                "elapsedDuration" : 8.9192665815353394,
+                "index" : 6,
+                "boundaryKind" : "interval"
+              }
+            ]
+          },
+          {
+            "distanceType" : "walkingRunning",
+            "items" : [
+              {
+                "elapsedDuration" : 646.57229089736938,
+                "boundaryKind" : "interval",
+                "activeDuration" : 646.57229089736938,
+                "isPartial" : false,
+                "end" : "2026-11-26 11:38:38 +0100",
+                "start" : "2026-11-26 11:27:51 +0100",
+                "metrics" : {
+                  "paceKilometre" : {
+                    "qty" : 401.76139526252274,
+                    "origin" : "activeTimeCalculation",
+                    "units" : "s\/km"
+                  },
+                  "paceMile" : {
+                    "origin" : "activeTimeCalculation",
+                    "qty" : 646.57229089736938,
+                    "units" : "s\/mi"
+                  },
+                  "heartRateMaximum" : {
+                    "units" : "bpm",
+                    "origin" : "sampleSummary",
+                    "qty" : 168,
+                    "sampleCount" : 128
+                  },
+                  "distance" : {
+                    "units" : "m",
+                    "origin" : "sampleOverlapEstimate",
+                    "qty" : 1609.3440000000001,
+                    "coveredDuration" : 646.57229089736938
+                  },
+                  "heartRateAverage" : {
+                    "sampleCount" : 128,
+                    "units" : "bpm",
+                    "origin" : "sampleSummary",
+                    "qty" : 155.2734375
+                  },
+                  "speed" : {
+                    "origin" : "activeTimeCalculation",
+                    "units" : "m\/s",
+                    "qty" : 2.4890395438480857
+                  },
+                  "activeEnergy" : {
+                    "qty" : 158.48893110338253,
+                    "coveredDuration" : 646.57229089736938,
+                    "units" : "kcal",
+                    "origin" : "sampleOverlapEstimate"
+                  },
+                  "heartRateMinimum" : {
+                    "qty" : 118,
+                    "units" : "bpm",
+                    "origin" : "sampleSummary",
+                    "sampleCount" : 128
+                  }
+                },
+                "index" : 1,
+                "boundaryOrigin" : "distanceInterpolation"
+              },
+              {
+                "isPartial" : false,
+                "metrics" : {
+                  "distance" : {
+                    "units" : "m",
+                    "coveredDuration" : 684.76894629001617,
+                    "origin" : "sampleOverlapEstimate",
+                    "qty" : 1609.3440000000001
+                  },
+                  "activeEnergy" : {
+                    "qty" : 156.81011569749933,
+                    "units" : "kcal",
+                    "origin" : "sampleOverlapEstimate",
+                    "coveredDuration" : 684.76894629001617
+                  },
+                  "speed" : {
+                    "units" : "m\/s",
+                    "origin" : "activeTimeCalculation",
+                    "qty" : 2.3502000327544117
+                  },
+                  "heartRateMinimum" : {
+                    "units" : "bpm",
+                    "origin" : "sampleSummary",
+                    "qty" : 130,
+                    "sampleCount" : 137
+                  },
+                  "heartRateAverage" : {
+                    "sampleCount" : 137,
+                    "units" : "bpm",
+                    "origin" : "sampleSummary",
+                    "qty" : 157.45255474452554
+                  },
+                  "paceKilometre" : {
+                    "qty" : 425.49569656333023,
+                    "units" : "s\/km",
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "paceMile" : {
+                    "qty" : 684.76894629001629,
+                    "units" : "s\/mi",
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "heartRateMaximum" : {
+                    "qty" : 174,
+                    "origin" : "sampleSummary",
+                    "units" : "bpm",
+                    "sampleCount" : 137
+                  }
+                },
+                "boundaryOrigin" : "distanceInterpolation",
+                "activeDuration" : 684.76894629001617,
+                "start" : "2026-11-26 11:38:38 +0100",
+                "index" : 2,
+                "end" : "2026-11-26 11:50:03 +0100",
+                "elapsedDuration" : 684.76894629001617,
+                "boundaryKind" : "interval"
+              },
+              {
+                "boundaryKind" : "interval",
+                "index" : 3,
+                "elapsedDuration" : 715.27449214458466,
+                "metrics" : {
+                  "heartRateAverage" : {
+                    "origin" : "sampleSummary",
+                    "units" : "bpm",
+                    "qty" : 152.2027972027972,
+                    "sampleCount" : 143
+                  },
+                  "heartRateMinimum" : {
+                    "units" : "bpm",
+                    "origin" : "sampleSummary",
+                    "sampleCount" : 143,
+                    "qty" : 132
+                  },
+                  "distance" : {
+                    "units" : "m",
+                    "qty" : 1609.3440000000001,
+                    "coveredDuration" : 715.27449214458466,
+                    "origin" : "sampleOverlapEstimate"
+                  },
+                  "heartRateMaximum" : {
+                    "qty" : 176,
+                    "units" : "bpm",
+                    "origin" : "sampleSummary",
+                    "sampleCount" : 143
+                  },
+                  "activeEnergy" : {
+                    "coveredDuration" : 715.27449214458466,
+                    "qty" : 138.13902801133622,
+                    "origin" : "sampleOverlapEstimate",
+                    "units" : "kcal"
+                  },
+                  "paceMile" : {
+                    "qty" : 715.27449214458466,
+                    "units" : "s\/mi",
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "speed" : {
+                    "qty" : 2.2499669954324184,
+                    "units" : "m\/s",
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "paceKilometre" : {
+                    "units" : "s\/km",
+                    "origin" : "activeTimeCalculation",
+                    "qty" : 444.45096396083414
+                  }
+                },
+                "end" : "2026-11-26 12:01:58 +0100",
+                "isPartial" : false,
+                "activeDuration" : 715.27449214458466,
+                "start" : "2026-11-26 11:50:03 +0100",
+                "boundaryOrigin" : "distanceInterpolation"
+              },
+              {
+                "boundaryKind" : "interval",
+                "boundaryOrigin" : "distanceInterpolation",
+                "elapsedDuration" : 82.81950569152832,
+                "start" : "2026-11-26 12:01:58 +0100",
+                "isPartial" : true,
+                "activeDuration" : 82.81950569152832,
+                "index" : 4,
+                "metrics" : {
+                  "heartRateAverage" : {
+                    "units" : "bpm",
+                    "qty" : 160.0625,
+                    "origin" : "sampleSummary",
+                    "sampleCount" : 16
+                  },
+                  "speed" : {
+                    "units" : "m\/s",
+                    "qty" : 2.1979585112066804,
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "distance" : {
+                    "qty" : 182.03383742862479,
+                    "units" : "m",
+                    "origin" : "sampleOverlapEstimate",
+                    "coveredDuration" : 77.607787847518921
+                  },
+                  "activeEnergy" : {
+                    "units" : "kcal",
+                    "qty" : 17.488326088541044,
+                    "origin" : "sampleOverlapEstimate",
+                    "coveredDuration" : 77.607787728309631
+                  },
+                  "heartRateMinimum" : {
+                    "qty" : 153,
+                    "units" : "bpm",
+                    "sampleCount" : 16,
+                    "origin" : "sampleSummary"
+                  },
+                  "paceKilometre" : {
+                    "qty" : 454.96764151885623,
+                    "units" : "s\/km",
+                    "origin" : "activeTimeCalculation"
+                  },
+                  "heartRateMaximum" : {
+                    "origin" : "sampleSummary",
+                    "sampleCount" : 16,
+                    "qty" : 164,
+                    "units" : "bpm"
+                  },
+                  "paceMile" : {
+                    "qty" : 732.19944407252217,
+                    "origin" : "activeTimeCalculation",
+                    "units" : "s\/mi"
+                  }
+                },
+                "end" : "2026-11-26 12:03:21 +0100"
+              }
+            ],
+            "targetDistance" : {
+              "units" : "mi",
+              "qty" : 1
+            },
+            "boundaryOrigin" : "distanceInterpolation"
+          }
+        ],
+        "speed" : {
+          "units" : "km\/hr",
+          "qty" : 8.4699627009524985
+        },
+        "totalEnergy" : {
+          "units" : "kJ",
+          "qty" : 2270.9095173687761
+        },
+        "start" : "2026-11-26 11:27:51 +0100",
+        "avgHeartRate" : {
+          "qty" : 155.18684926184929,
+          "units" : "bpm"
+        },
+        "elevationUp" : {
+          "qty" : 21.07,
+          "units" : "m"
+        },
+        "segments" : [
+          {
+            "eventIndex" : 1,
+            "metrics" : {
+              "paceMile" : {
+                "origin" : "activeTimeCalculation",
+                "qty" : 636.10026361751147,
+                "units" : "s\/mi"
+              },
+              "paceKilometre" : {
+                "qty" : 395.25437918649556,
+                "units" : "s\/km",
+                "origin" : "activeTimeCalculation"
+              },
+              "distance" : {
+                "coveredDuration" : 395.25437915325165,
+                "units" : "m",
+                "qty" : 999.99999991589243,
+                "origin" : "sampleOverlapEstimate"
+              },
+              "heartRateMinimum" : {
+                "sampleCount" : 77,
+                "units" : "bpm",
+                "origin" : "sampleSummary",
+                "qty" : 118
+              },
+              "heartRateAverage" : {
+                "sampleCount" : 77,
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "qty" : 150.77922077922079
+              },
+              "speed" : {
+                "units" : "m\/s",
+                "qty" : 2.5300162443694605,
+                "origin" : "activeTimeCalculation"
+              },
+              "heartRateMaximum" : {
+                "origin" : "sampleSummary",
+                "sampleCount" : 77,
+                "qty" : 164,
+                "units" : "bpm"
+              },
+              "activeEnergy" : {
+                "units" : "kcal",
+                "qty" : 96.42569961358339,
+                "coveredDuration" : 395.25437915325165,
+                "origin" : "sampleOverlapEstimate"
+              }
+            },
+            "activeDuration" : 395.25437915325165,
+            "boundaryKind" : "interval",
+            "start" : "2026-11-26 11:27:51 +0100",
+            "index" : 1,
+            "elapsedDuration" : 395.25437915325165,
+            "boundaryOrigin" : "recordedEvent",
+            "end" : "2026-11-26 11:34:27 +0100"
+          },
+          {
+            "start" : "2026-11-26 11:27:51 +0100",
+            "activeDuration" : 646.57229089736938,
+            "elapsedDuration" : 646.57229089736938,
+            "boundaryOrigin" : "recordedEvent",
+            "end" : "2026-11-26 11:38:38 +0100",
+            "eventIndex" : 2,
+            "metrics" : {
+              "speed" : {
+                "origin" : "activeTimeCalculation",
+                "units" : "m\/s",
+                "qty" : 2.4890395438387327
+              },
+              "paceKilometre" : {
+                "units" : "s\/km",
+                "qty" : 401.76139526403239,
+                "origin" : "activeTimeCalculation"
+              },
+              "activeEnergy" : {
+                "origin" : "sampleOverlapEstimate",
+                "qty" : 158.48893110338253,
+                "coveredDuration" : 646.57229089736938,
+                "units" : "kcal"
+              },
+              "heartRateMaximum" : {
+                "sampleCount" : 128,
+                "origin" : "sampleSummary",
+                "qty" : 168,
+                "units" : "bpm"
+              },
+              "paceMile" : {
+                "origin" : "activeTimeCalculation",
+                "units" : "s\/mi",
+                "qty" : 646.57229089979887
+              },
+              "distance" : {
+                "units" : "m",
+                "coveredDuration" : 646.57229089736938,
+                "qty" : 1609.3439999939528,
+                "origin" : "sampleOverlapEstimate"
+              },
+              "heartRateMinimum" : {
+                "units" : "bpm",
+                "origin" : "sampleSummary",
+                "qty" : 118,
+                "sampleCount" : 128
+              },
+              "heartRateAverage" : {
+                "sampleCount" : 128,
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "qty" : 155.2734375
+              }
+            },
+            "boundaryKind" : "interval",
+            "index" : 2
+          },
+          {
+            "boundaryOrigin" : "recordedEvent",
+            "end" : "2026-11-26 11:41:28 +0100",
+            "start" : "2026-11-26 11:34:27 +0100",
+            "elapsedDuration" : 421.32302474975586,
+            "eventIndex" : 3,
+            "metrics" : {
+              "activeEnergy" : {
+                "origin" : "sampleOverlapEstimate",
+                "units" : "kcal",
+                "coveredDuration" : 421.32302474975586,
+                "qty" : 97.284173684778978
+              },
+              "heartRateMaximum" : {
+                "qty" : 168,
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "sampleCount" : 85
+              },
+              "speed" : {
+                "origin" : "activeTimeCalculation",
+                "qty" : 2.3734757924372647,
+                "units" : "m\/s"
+              },
+              "distance" : {
+                "coveredDuration" : 421.32302474975586,
+                "origin" : "sampleOverlapEstimate",
+                "qty" : 1000.0000000399921,
+                "units" : "m"
+              },
+              "heartRateAverage" : {
+                "sampleCount" : 85,
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "qty" : 157.62352941176471
+              },
+              "heartRateMinimum" : {
+                "sampleCount" : 85,
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "qty" : 136
+              },
+              "paceKilometre" : {
+                "units" : "s\/km",
+                "origin" : "activeTimeCalculation",
+                "qty" : 421.32302473290628
+              },
+              "paceMile" : {
+                "origin" : "activeTimeCalculation",
+                "qty" : 678.05368191575428,
+                "units" : "s\/mi"
+              }
+            },
+            "activeDuration" : 421.32302474975586,
+            "index" : 3,
+            "boundaryKind" : "interval"
+          },
+          {
+            "end" : "2026-11-26 11:50:03 +0100",
+            "start" : "2026-11-26 11:38:38 +0100",
+            "index" : 4,
+            "eventIndex" : 4,
+            "elapsedDuration" : 684.76894629001617,
+            "boundaryOrigin" : "recordedEvent",
+            "activeDuration" : 684.76894629001617,
+            "boundaryKind" : "interval",
+            "metrics" : {
+              "activeEnergy" : {
+                "qty" : 156.81011569749933,
+                "units" : "kcal",
+                "coveredDuration" : 684.76894629001617,
+                "origin" : "sampleOverlapEstimate"
+              },
+              "distance" : {
+                "qty" : 1609.3440000707146,
+                "units" : "m",
+                "origin" : "sampleOverlapEstimate",
+                "coveredDuration" : 684.76894629001617
+              },
+              "heartRateAverage" : {
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "qty" : 157.45255474452554,
+                "sampleCount" : 137
+              },
+              "heartRateMinimum" : {
+                "sampleCount" : 137,
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "qty" : 130
+              },
+              "speed" : {
+                "qty" : 2.3502000328576798,
+                "units" : "m\/s",
+                "origin" : "activeTimeCalculation"
+              },
+              "paceKilometre" : {
+                "units" : "s\/km",
+                "qty" : 425.49569654463397,
+                "origin" : "activeTimeCalculation"
+              },
+              "heartRateMaximum" : {
+                "qty" : 174,
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "sampleCount" : 137
+              },
+              "paceMile" : {
+                "origin" : "activeTimeCalculation",
+                "units" : "s\/mi",
+                "qty" : 684.76894625992747
+              }
+            }
+          },
+          {
+            "boundaryOrigin" : "recordedEvent",
+            "start" : "2026-11-26 11:41:28 +0100",
+            "metrics" : {
+              "activeEnergy" : {
+                "origin" : "sampleOverlapEstimate",
+                "coveredDuration" : 415.7201726436615,
+                "qty" : 102.87202776942223,
+                "units" : "kcal"
+              },
+              "distance" : {
+                "origin" : "sampleOverlapEstimate",
+                "coveredDuration" : 415.7201726436615,
+                "units" : "m",
+                "qty" : 1000.0000001145818
+              },
+              "heartRateAverage" : {
+                "sampleCount" : 82,
+                "units" : "bpm",
+                "qty" : 163.21951219512195,
+                "origin" : "sampleSummary"
+              },
+              "heartRateMinimum" : {
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "qty" : 151,
+                "sampleCount" : 82
+              },
+              "paceKilometre" : {
+                "origin" : "activeTimeCalculation",
+                "qty" : 415.72017259602757,
+                "units" : "s\/km"
+              },
+              "heartRateMaximum" : {
+                "sampleCount" : 82,
+                "qty" : 174,
+                "origin" : "sampleSummary",
+                "units" : "bpm"
+              },
+              "speed" : {
+                "qty" : 2.4054642182873844,
+                "origin" : "activeTimeCalculation",
+                "units" : "m\/s"
+              },
+              "paceMile" : {
+                "qty" : 669.03676544638131,
+                "units" : "s\/mi",
+                "origin" : "activeTimeCalculation"
+              }
+            },
+            "index" : 5,
+            "elapsedDuration" : 415.7201726436615,
+            "boundaryKind" : "interval",
+            "end" : "2026-11-26 11:48:24 +0100",
+            "eventIndex" : 5,
+            "activeDuration" : 415.7201726436615
+          },
+          {
+            "metrics" : {
+              "paceKilometre" : {
+                "qty" : 446.72724727126842,
+                "units" : "s\/km",
+                "origin" : "activeTimeCalculation"
+              },
+              "paceMile" : {
+                "qty" : 718.93781503253228,
+                "units" : "s\/mi",
+                "origin" : "activeTimeCalculation"
+              },
+              "activeEnergy" : {
+                "qty" : 85.011626422818097,
+                "units" : "kcal",
+                "origin" : "sampleOverlapEstimate",
+                "coveredDuration" : 446.72724723815918
+              },
+              "heartRateMinimum" : {
+                "qty" : 130,
+                "sampleCount" : 90,
+                "origin" : "sampleSummary",
+                "units" : "bpm"
+              },
+              "distance" : {
+                "units" : "m",
+                "qty" : 999.99999992588482,
+                "coveredDuration" : 446.72724723815918,
+                "origin" : "sampleOverlapEstimate"
+              },
+              "speed" : {
+                "qty" : 2.2385023660595409,
+                "origin" : "activeTimeCalculation",
+                "units" : "m\/s"
+              },
+              "heartRateAverage" : {
+                "qty" : 151.1888888888889,
+                "units" : "bpm",
+                "sampleCount" : 90,
+                "origin" : "sampleSummary"
+              },
+              "heartRateMaximum" : {
+                "sampleCount" : 90,
+                "qty" : 176,
+                "units" : "bpm",
+                "origin" : "sampleSummary"
+              }
+            },
+            "elapsedDuration" : 446.72724723815918,
+            "start" : "2026-11-26 11:48:24 +0100",
+            "index" : 6,
+            "activeDuration" : 446.72724723815918,
+            "boundaryKind" : "interval",
+            "end" : "2026-11-26 11:55:50 +0100",
+            "boundaryOrigin" : "recordedEvent",
+            "eventIndex" : 6
+          },
+          {
+            "activeDuration" : 715.27449214458466,
+            "metrics" : {
+              "heartRateMinimum" : {
+                "units" : "bpm",
+                "qty" : 132,
+                "origin" : "sampleSummary",
+                "sampleCount" : 143
+              },
+              "paceMile" : {
+                "qty" : 715.27449218759534,
+                "units" : "s\/mi",
+                "origin" : "activeTimeCalculation"
+              },
+              "paceKilometre" : {
+                "origin" : "activeTimeCalculation",
+                "qty" : 444.4509639875597,
+                "units" : "s\/km"
+              },
+              "heartRateAverage" : {
+                "origin" : "sampleSummary",
+                "qty" : 152.2027972027972,
+                "units" : "bpm",
+                "sampleCount" : 143
+              },
+              "heartRateMaximum" : {
+                "sampleCount" : 143,
+                "units" : "bpm",
+                "qty" : 176,
+                "origin" : "sampleSummary"
+              },
+              "speed" : {
+                "origin" : "activeTimeCalculation",
+                "qty" : 2.249966995297124,
+                "units" : "m\/s"
+              },
+              "activeEnergy" : {
+                "origin" : "sampleOverlapEstimate",
+                "qty" : 138.13902801133622,
+                "units" : "kcal",
+                "coveredDuration" : 715.27449214458466
+              },
+              "distance" : {
+                "qty" : 1609.3439999032275,
+                "coveredDuration" : 715.27449214458466,
+                "origin" : "sampleOverlapEstimate",
+                "units" : "m"
+              }
+            },
+            "boundaryOrigin" : "recordedEvent",
+            "start" : "2026-11-26 11:50:03 +0100",
+            "elapsedDuration" : 715.27449214458466,
+            "end" : "2026-11-26 12:01:58 +0100",
+            "eventIndex" : 7,
+            "index" : 7,
+            "boundaryKind" : "interval"
+          },
+          {
+            "start" : "2026-11-26 11:55:50 +0100",
+            "boundaryKind" : "interval",
+            "eventIndex" : 8,
+            "activeDuration" : 441.49114465713501,
+            "metrics" : {
+              "distance" : {
+                "coveredDuration" : 441.49114465713501,
+                "origin" : "sampleOverlapEstimate",
+                "qty" : 999.99999989411936,
+                "units" : "m"
+              },
+              "activeEnergy" : {
+                "units" : "kcal",
+                "coveredDuration" : 441.49114465713501,
+                "origin" : "sampleOverlapEstimate",
+                "qty" : 88.351789410724336
+              },
+              "heartRateMaximum" : {
+                "qty" : 173,
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "sampleCount" : 89
+              },
+              "speed" : {
+                "origin" : "activeTimeCalculation",
+                "qty" : 2.2650510933140597,
+                "units" : "m\/s"
+              },
+              "paceMile" : {
+                "qty" : 710.51112478232164,
+                "origin" : "activeTimeCalculation",
+                "units" : "s\/mi"
+              },
+              "heartRateMinimum" : {
+                "units" : "bpm",
+                "origin" : "sampleSummary",
+                "sampleCount" : 89,
+                "qty" : 136
+              },
+              "paceKilometre" : {
+                "origin" : "activeTimeCalculation",
+                "qty" : 441.49114470388037,
+                "units" : "s\/km"
+              },
+              "heartRateAverage" : {
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "sampleCount" : 89,
+                "qty" : 152.97752808988764
+              }
+            },
+            "boundaryOrigin" : "recordedEvent",
+            "end" : "2026-11-26 12:03:12 +0100",
+            "elapsedDuration" : 441.49114465713501,
+            "index" : 8
+          },
+          {
+            "elapsedDuration" : 77.607787847518921,
+            "index" : 9,
+            "eventIndex" : 9,
+            "boundaryOrigin" : "recordedEvent",
+            "metrics" : {
+              "paceMile" : {
+                "qty" : 686.12313769752598,
+                "origin" : "activeTimeCalculation",
+                "units" : "s\/mi"
+              },
+              "speed" : {
+                "units" : "m\/s",
+                "qty" : 2.3455614766186055,
+                "origin" : "activeTimeCalculation"
+              },
+              "heartRateMaximum" : {
+                "units" : "bpm",
+                "sampleCount" : 15,
+                "qty" : 164,
+                "origin" : "sampleSummary"
+              },
+              "distance" : {
+                "origin" : "sampleOverlapEstimate",
+                "qty" : 182.03383746072996,
+                "coveredDuration" : 77.607787847518921,
+                "units" : "m"
+              },
+              "heartRateAverage" : {
+                "qty" : 160.19999999999999,
+                "sampleCount" : 15,
+                "origin" : "sampleSummary",
+                "units" : "bpm"
+              },
+              "heartRateMinimum" : {
+                "sampleCount" : 15,
+                "origin" : "sampleSummary",
+                "units" : "bpm",
+                "qty" : 153
+              },
+              "paceKilometre" : {
+                "origin" : "activeTimeCalculation",
+                "qty" : 426.3371520927322,
+                "units" : "s\/km"
+              },
+              "activeEnergy" : {
+                "coveredDuration" : 77.607787728309631,
+                "units" : "kcal",
+                "origin" : "sampleOverlapEstimate",
+                "qty" : 17.488326088541044
+              }
+            },
+            "start" : "2026-11-26 12:01:58 +0100",
+            "end" : "2026-11-26 12:03:16 +0100",
+            "boundaryKind" : "interval",
+            "activeDuration" : 77.607787847518921
+          },
+          {
+            "end" : "2026-11-26 12:03:16 +0100",
+            "elapsedDuration" : 3.7075487375259399,
+            "index" : 10,
+            "activeDuration" : 3.7075487375259399,
+            "boundaryKind" : "interval",
+            "start" : "2026-11-26 12:03:12 +0100",
+            "eventIndex" : 10,
+            "metrics" : {
+              "activeEnergy" : {
+                "coveredDuration" : 3.7075486183166504,
+                "qty" : 0.98108399943208724,
+                "units" : "kcal",
+                "origin" : "sampleOverlapEstimate"
+              },
+              "paceKilometre" : {
+                "units" : "s\/km",
+                "origin" : "activeTimeCalculation",
+                "qty" : 368.32988049653136
+              },
+              "paceMile" : {
+                "qty" : 592.76948319780979,
+                "units" : "s\/mi",
+                "origin" : "activeTimeCalculation"
+              },
+              "distance" : {
+                "units" : "m",
+                "coveredDuration" : 3.7075487375259399,
+                "origin" : "sampleOverlapEstimate",
+                "qty" : 10.065837538154483
+              },
+              "speed" : {
+                "qty" : 2.7149575772998338,
+                "origin" : "activeTimeCalculation",
+                "units" : "m\/s"
+              }
+            },
+            "boundaryOrigin" : "recordedEvent"
+          }
+        ],
+        "intensity" : {
+          "units" : "kcal\/hr·kg",
+          "qty" : 9.8916568476131488
+        },
+        "id" : "82F542E0-2E90-4527-91CA-EBA0B45E1CB7",
+        "isIndoor" : false,
+        "metadata" : {
+
+        },
+        "basalEnergy" : [
+          {
+            "qty" : 5.7135667387618225,
+            "units" : "kJ",
+            "date" : "2026-11-26 11:27:00 +0100",
+            "source" : ""
+          },
+          {
+            "units" : "kJ",
+            "source" : "",
+            "date" : "2026-11-26 11:28:00 +0100",
+            "qty" : 8.3482171164255838
+          },
+          {
+            "date" : "2026-11-26 11:29:00 +0100",
+            "qty" : 8.3482908547412862,
+            "source" : "",
+            "units" : "kJ"
+          },
+          {
+            "qty" : 8.3483829323699901,
+            "source" : "",
+            "date" : "2026-11-26 11:30:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "date" : "2026-11-26 11:31:00 +0100",
+            "qty" : 8.3484713389266147,
+            "source" : "",
+            "units" : "kJ"
+          },
+          {
+            "source" : "",
+            "qty" : 8.3485336226643838,
+            "date" : "2026-11-26 11:32:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "date" : "2026-11-26 11:33:00 +0100",
+            "units" : "kJ",
+            "source" : "",
+            "qty" : 8.3485592810071712
+          },
+          {
+            "date" : "2026-11-26 11:34:00 +0100",
+            "source" : "",
+            "units" : "kJ",
+            "qty" : 8.3486060227480152
+          },
+          {
+            "date" : "2026-11-26 11:35:00 +0100",
+            "units" : "kJ",
+            "qty" : 8.348740435033287,
+            "source" : ""
+          },
+          {
+            "source" : "",
+            "qty" : 8.3488247393090766,
+            "units" : "kJ",
+            "date" : "2026-11-26 11:36:00 +0100"
+          },
+          {
+            "date" : "2026-11-26 11:37:00 +0100",
+            "source" : "",
+            "units" : "kJ",
+            "qty" : 8.3488594570242824
+          },
+          {
+            "qty" : 8.3488860690762277,
+            "units" : "kJ",
+            "date" : "2026-11-26 11:38:00 +0100",
+            "source" : ""
+          },
+          {
+            "source" : "",
+            "qty" : 8.3489484044655811,
+            "date" : "2026-11-26 11:39:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "source" : "",
+            "units" : "kJ",
+            "qty" : 8.3489788451883911,
+            "date" : "2026-11-26 11:40:00 +0100"
+          },
+          {
+            "source" : "",
+            "qty" : 8.3490008773685194,
+            "date" : "2026-11-26 11:41:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "source" : "",
+            "qty" : 8.3491738279040106,
+            "date" : "2026-11-26 11:42:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "source" : "",
+            "qty" : 8.3492639389649419,
+            "units" : "kJ",
+            "date" : "2026-11-26 11:43:00 +0100"
+          },
+          {
+            "date" : "2026-11-26 11:44:00 +0100",
+            "qty" : 8.3493387018125631,
+            "units" : "kJ",
+            "source" : ""
+          },
+          {
+            "date" : "2026-11-26 11:45:00 +0100",
+            "source" : "",
+            "units" : "kJ",
+            "qty" : 8.3493706384611599
+          },
+          {
+            "qty" : 8.3494622087414978,
+            "source" : "",
+            "date" : "2026-11-26 11:46:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "date" : "2026-11-26 11:47:00 +0100",
+            "units" : "kJ",
+            "source" : "",
+            "qty" : 8.349664143526633
+          },
+          {
+            "source" : "",
+            "date" : "2026-11-26 11:48:00 +0100",
+            "units" : "kJ",
+            "qty" : 8.3501162711935493
+          },
+          {
+            "units" : "kJ",
+            "source" : "",
+            "date" : "2026-11-26 11:49:00 +0100",
+            "qty" : 8.3505556250705357
+          },
+          {
+            "qty" : 8.3508336788684066,
+            "source" : "",
+            "units" : "kJ",
+            "date" : "2026-11-26 11:50:00 +0100"
+          },
+          {
+            "qty" : 8.3510439062800632,
+            "source" : "",
+            "units" : "kJ",
+            "date" : "2026-11-26 11:51:00 +0100"
+          },
+          {
+            "date" : "2026-11-26 11:52:00 +0100",
+            "units" : "kJ",
+            "source" : "",
+            "qty" : 8.3510992226930032
+          },
+          {
+            "qty" : 8.3512222096868189,
+            "date" : "2026-11-26 11:53:00 +0100",
+            "source" : "",
+            "units" : "kJ"
+          },
+          {
+            "qty" : 8.3513970511834614,
+            "units" : "kJ",
+            "date" : "2026-11-26 11:54:00 +0100",
+            "source" : ""
+          },
+          {
+            "source" : "",
+            "date" : "2026-11-26 11:55:00 +0100",
+            "units" : "kJ",
+            "qty" : 8.3514403064507263
+          },
+          {
+            "date" : "2026-11-26 11:56:00 +0100",
+            "source" : "",
+            "qty" : 8.3515886648066822,
+            "units" : "kJ"
+          },
+          {
+            "qty" : 8.3516811889205727,
+            "date" : "2026-11-26 11:57:00 +0100",
+            "units" : "kJ",
+            "source" : ""
+          },
+          {
+            "source" : "",
+            "date" : "2026-11-26 11:58:00 +0100",
+            "qty" : 8.351783899969389,
+            "units" : "kJ"
+          },
+          {
+            "qty" : 8.351847216334388,
+            "source" : "",
+            "units" : "kJ",
+            "date" : "2026-11-26 11:59:00 +0100"
+          },
+          {
+            "units" : "kJ",
+            "source" : "",
+            "date" : "2026-11-26 12:00:00 +0100",
+            "qty" : 8.3518719735432239
+          },
+          {
+            "date" : "2026-11-26 12:01:00 +0100",
+            "units" : "kJ",
+            "source" : "",
+            "qty" : 8.3519544288494725
+          },
+          {
+            "source" : "",
+            "units" : "kJ",
+            "date" : "2026-11-26 12:02:00 +0100",
+            "qty" : 8.3520410091673529
+          },
+          {
+            "source" : "",
+            "units" : "kJ",
+            "qty" : 2.5918391524612412,
+            "date" : "2026-11-26 12:03:00 +0100"
+          }
+        ],
+        "end" : "2026-11-26 12:03:21 +0100",
+        "name" : "Outdoor Laufen",
+        "distance" : {
+          "qty" : 5.0100658374286251,
+          "units" : "km"
+        },
+        "duration" : 2129.4352350234985,
+        "activities" : [
+          {
+            "activityType" : "running",
+            "end" : "2026-11-26 12:03:21 +0100",
+            "elapsedDuration" : 2129.4352350234985,
+            "activeDuration" : 2129.4352350234985,
+            "boundaryKind" : "interval",
+            "activityTypeCode" : 37,
+            "metrics" : {
+              "heartRateAverage" : {
+                "units" : "bpm",
+                "origin" : "activityStatistics",
+                "qty" : 155.18684926184929
+              },
+              "activeEnergy" : {
+                "origin" : "activityStatistics",
+                "qty" : 470.92640090075906,
+                "units" : "kcal"
+              },
+              "heartRateMinimum" : {
+                "origin" : "activityStatistics",
+                "units" : "bpm",
+                "qty" : 118
+              },
+              "paceMile" : {
+                "origin" : "activeTimeCalculation",
+                "qty" : 684.02171350158017,
+                "units" : "s\/mi"
+              },
+              "heartRateMaximum" : {
+                "origin" : "activityStatistics",
+                "qty" : 176,
+                "units" : "bpm"
+              },
+              "distance" : {
+                "qty" : 5010.0658374286249,
+                "units" : "m",
+                "origin" : "activityStatistics"
+              },
+              "speed" : {
+                "origin" : "activeTimeCalculation",
+                "units" : "m\/s",
+                "qty" : 2.3527674169312496
+              },
+              "paceKilometre" : {
+                "units" : "s\/km",
+                "origin" : "activeTimeCalculation",
+                "qty" : 425.03138763470093
+              }
+            },
+            "configuration" : {
+              "locationType" : "outdoor",
+              "swimmingLocationType" : "unknown"
+            },
+            "boundaryOrigin" : "recordedActivity",
+            "index" : 1,
+            "id" : "82F542E0-2E90-4527-91CA-EBA0B45E1CB7",
+            "start" : "2026-11-26 11:27:51 +0100",
+            "duration" : 2129.4352350234985
+          }
+        ],
+        "temperature" : {
+          "units" : "degC",
+          "qty" : 0.84208285808341543
+        },
+        "activeEnergy" : [
+          {
+            "source" : "",
+            "qty" : 6.8440286592827864,
+            "date" : "2026-11-26 11:27:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "date" : "2026-11-26 11:28:00 +0100",
+            "qty" : 52.62484442699521,
+            "source" : "",
+            "units" : "kJ"
+          },
+          {
+            "qty" : 62.634563257181775,
+            "source" : "",
+            "date" : "2026-11-26 11:29:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "units" : "kJ",
+            "source" : "",
+            "date" : "2026-11-26 11:30:00 +0100",
+            "qty" : 64.135768053845254
+          },
+          {
+            "units" : "kJ",
+            "source" : "",
+            "date" : "2026-11-26 11:31:00 +0100",
+            "qty" : 63.262152373236802
+          },
+          {
+            "date" : "2026-11-26 11:32:00 +0100",
+            "source" : "",
+            "units" : "kJ",
+            "qty" : 64.591919612144082
+          },
+          {
+            "source" : "",
+            "units" : "kJ",
+            "date" : "2026-11-26 11:33:00 +0100",
+            "qty" : 64.429547055692211
+          },
+          {
+            "source" : "",
+            "date" : "2026-11-26 11:34:00 +0100",
+            "qty" : 65.794006136003574,
+            "units" : "kJ"
+          },
+          {
+            "qty" : 64.018207269884016,
+            "source" : "",
+            "date" : "2026-11-26 11:35:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "units" : "kJ",
+            "date" : "2026-11-26 11:36:00 +0100",
+            "qty" : 67.528723272384966,
+            "source" : ""
+          },
+          {
+            "source" : "",
+            "units" : "kJ",
+            "date" : "2026-11-26 11:37:00 +0100",
+            "qty" : 65.669433548130456
+          },
+          {
+            "date" : "2026-11-26 11:38:00 +0100",
+            "source" : "",
+            "qty" : 38.594221084576787,
+            "units" : "kJ"
+          },
+          {
+            "units" : "kJ",
+            "qty" : 54.641895050305358,
+            "source" : "",
+            "date" : "2026-11-26 11:39:00 +0100"
+          },
+          {
+            "source" : "",
+            "units" : "kJ",
+            "date" : "2026-11-26 11:40:00 +0100",
+            "qty" : 57.170639425447654
+          },
+          {
+            "date" : "2026-11-26 11:41:00 +0100",
+            "source" : "",
+            "units" : "kJ",
+            "qty" : 55.325324361727112
+          },
+          {
+            "units" : "kJ",
+            "qty" : 55.824803817324607,
+            "source" : "",
+            "date" : "2026-11-26 11:42:00 +0100"
+          },
+          {
+            "qty" : 59.819151860630598,
+            "source" : "",
+            "units" : "kJ",
+            "date" : "2026-11-26 11:43:00 +0100"
+          },
+          {
+            "date" : "2026-11-26 11:44:00 +0100",
+            "units" : "kJ",
+            "qty" : 61.932428761415089,
+            "source" : ""
+          },
+          {
+            "source" : "",
+            "date" : "2026-11-26 11:45:00 +0100",
+            "qty" : 70.45666137375386,
+            "units" : "kJ"
+          },
+          {
+            "source" : "",
+            "qty" : 73.374429943770437,
+            "units" : "kJ",
+            "date" : "2026-11-26 11:46:00 +0100"
+          },
+          {
+            "source" : "",
+            "units" : "kJ",
+            "date" : "2026-11-26 11:47:00 +0100",
+            "qty" : 56.501063684635703
+          },
+          {
+            "qty" : 42.130162558254973,
+            "date" : "2026-11-26 11:48:00 +0100",
+            "units" : "kJ",
+            "source" : ""
+          },
+          {
+            "date" : "2026-11-26 11:49:00 +0100",
+            "units" : "kJ",
+            "source" : "",
+            "qty" : 55.114278155043905
+          },
+          {
+            "qty" : 39.585578130841412,
+            "units" : "kJ",
+            "date" : "2026-11-26 11:50:00 +0100",
+            "source" : ""
+          },
+          {
+            "date" : "2026-11-26 11:51:00 +0100",
+            "source" : "",
+            "qty" : 51.731069144191565,
+            "units" : "kJ"
+          },
+          {
+            "units" : "kJ",
+            "source" : "",
+            "qty" : 37.491846357978169,
+            "date" : "2026-11-26 11:52:00 +0100"
+          },
+          {
+            "source" : "",
+            "date" : "2026-11-26 11:53:00 +0100",
+            "qty" : 61.224706058608852,
+            "units" : "kJ"
+          },
+          {
+            "qty" : 57.758625111299182,
+            "date" : "2026-11-26 11:54:00 +0100",
+            "source" : "",
+            "units" : "kJ"
+          },
+          {
+            "date" : "2026-11-26 11:55:00 +0100",
+            "qty" : 40.474932206230655,
+            "units" : "kJ",
+            "source" : ""
+          },
+          {
+            "source" : "",
+            "units" : "kJ",
+            "qty" : 61.30618499897929,
+            "date" : "2026-11-26 11:56:00 +0100"
+          },
+          {
+            "source" : "",
+            "qty" : 47.455221817821965,
+            "date" : "2026-11-26 11:57:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "source" : "",
+            "qty" : 44.405888242582009,
+            "date" : "2026-11-26 11:58:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "qty" : 43.056952988342545,
+            "units" : "kJ",
+            "date" : "2026-11-26 11:59:00 +0100",
+            "source" : ""
+          },
+          {
+            "qty" : 50.624622476967893,
+            "units" : "kJ",
+            "date" : "2026-11-26 12:00:00 +0100",
+            "source" : ""
+          },
+          {
+            "source" : "",
+            "date" : "2026-11-26 12:01:00 +0100",
+            "qty" : 46.51526939913478,
+            "units" : "kJ"
+          },
+          {
+            "qty" : 56.135315028679138,
+            "source" : "",
+            "date" : "2026-11-26 12:02:00 +0100",
+            "units" : "kJ"
+          },
+          {
+            "qty" : 18.106966296675335,
+            "units" : "kJ",
+            "date" : "2026-11-26 12:03:00 +0100",
+            "source" : ""
+          }
+        ],
+        "source" : {
+          "identifier" : "com.apple.health.F28D9745-57AF-4190-A539-0355AA88DA0F",
+          "name" : "Apple Watch von Carl"
+        },
+        "activeEnergyBurned" : {
+          "qty" : 1970.356061368776,
+          "units" : "kJ"
+        },
+        "estimatedEffortScore" : {
+          "units" : "appleEffortScore",
+          "qty" : 6
+        },
+        "events" : [
+          {
+            "index" : 1,
+            "typeCode" : 7,
+            "boundaryOrigin" : "recordedEvent",
+            "boundaryKind" : "interval",
+            "end" : "2026-11-26 11:34:27 +0100",
+            "start" : "2026-11-26 11:27:51 +0100",
+            "type" : "segment"
+          },
+          {
+            "end" : "2026-11-26 11:38:38 +0100",
+            "boundaryKind" : "interval",
+            "start" : "2026-11-26 11:27:51 +0100",
+            "type" : "segment",
+            "typeCode" : 7,
+            "index" : 2,
+            "boundaryOrigin" : "recordedEvent"
+          },
+          {
+            "index" : 3,
+            "type" : "segment",
+            "boundaryKind" : "interval",
+            "typeCode" : 7,
+            "start" : "2026-11-26 11:34:27 +0100",
+            "end" : "2026-11-26 11:41:28 +0100",
+            "boundaryOrigin" : "recordedEvent"
+          },
+          {
+            "start" : "2026-11-26 11:38:38 +0100",
+            "boundaryOrigin" : "recordedEvent",
+            "index" : 4,
+            "end" : "2026-11-26 11:50:03 +0100",
+            "typeCode" : 7,
+            "type" : "segment",
+            "boundaryKind" : "interval"
+          },
+          {
+            "index" : 5,
+            "boundaryOrigin" : "recordedEvent",
+            "type" : "segment",
+            "boundaryKind" : "interval",
+            "start" : "2026-11-26 11:41:28 +0100",
+            "typeCode" : 7,
+            "end" : "2026-11-26 11:48:24 +0100"
+          },
+          {
+            "index" : 6,
+            "boundaryKind" : "interval",
+            "boundaryOrigin" : "recordedEvent",
+            "typeCode" : 7,
+            "end" : "2026-11-26 11:55:50 +0100",
+            "start" : "2026-11-26 11:48:24 +0100",
+            "type" : "segment"
+          },
+          {
+            "start" : "2026-11-26 11:50:03 +0100",
+            "boundaryKind" : "interval",
+            "typeCode" : 7,
+            "index" : 7,
+            "end" : "2026-11-26 12:01:58 +0100",
+            "type" : "segment",
+            "boundaryOrigin" : "recordedEvent"
+          },
+          {
+            "index" : 8,
+            "typeCode" : 7,
+            "boundaryOrigin" : "recordedEvent",
+            "end" : "2026-11-26 12:03:12 +0100",
+            "type" : "segment",
+            "boundaryKind" : "interval",
+            "start" : "2026-11-26 11:55:50 +0100"
+          },
+          {
+            "start" : "2026-11-26 12:01:58 +0100",
+            "typeCode" : 7,
+            "type" : "segment",
+            "boundaryOrigin" : "recordedEvent",
+            "boundaryKind" : "interval",
+            "end" : "2026-11-26 12:03:16 +0100",
+            "index" : 9
+          },
+          {
+            "index" : 10,
+            "boundaryOrigin" : "recordedEvent",
+            "end" : "2026-11-26 12:03:16 +0100",
+            "type" : "segment",
+            "start" : "2026-11-26 12:03:12 +0100",
+            "boundaryKind" : "interval",
+            "typeCode" : 7
+          }
+        ],
+        "maxHeartRate" : {
+          "qty" : 176,
+          "units" : "bpm"
+        },
+        "heartRateData" : [
+          {
+            "Avg" : 128,
+            "Max" : 128,
+            "units" : "bpm",
+            "date" : "2026-11-26 11:27:00 +0100",
+            "Min" : 128
+          },
+          {
+            "Max" : 149,
+            "Avg" : 133,
+            "units" : "bpm",
+            "Min" : 118,
+            "date" : "2026-11-26 11:28:00 +0100"
+          },
+          {
+            "date" : "2026-11-26 11:29:00 +0100",
+            "Avg" : 151.83333333333334,
+            "units" : "bpm",
+            "Max" : 154,
+            "Min" : 148
+          },
+          {
+            "Max" : 155,
+            "Min" : 151,
+            "Avg" : 153.18181818181819,
+            "date" : "2026-11-26 11:30:00 +0100",
+            "units" : "bpm"
+          },
+          {
+            "Avg" : 153.58333333333334,
+            "Max" : 156,
+            "units" : "bpm",
+            "Min" : 152,
+            "date" : "2026-11-26 11:31:00 +0100"
+          },
+          {
+            "date" : "2026-11-26 11:32:00 +0100",
+            "units" : "bpm",
+            "Min" : 150,
+            "Max" : 156,
+            "Avg" : 153.41666666666666
+          },
+          {
+            "Max" : 164,
+            "date" : "2026-11-26 11:33:00 +0100",
+            "units" : "bpm",
+            "Avg" : 158.41666666666666,
+            "Min" : 152
+          },
+          {
+            "Min" : 154,
+            "Avg" : 156.91666666666666,
+            "date" : "2026-11-26 11:34:00 +0100",
+            "units" : "bpm",
+            "Max" : 161
+          },
+          {
+            "date" : "2026-11-26 11:35:00 +0100",
+            "Min" : 157,
+            "Avg" : 160.58333333333334,
+            "Max" : 162,
+            "units" : "bpm"
+          },
+          {
+            "Max" : 166,
+            "Min" : 159,
+            "Avg" : 162,
+            "date" : "2026-11-26 11:36:00 +0100",
+            "units" : "bpm"
+          },
+          {
+            "Avg" : 166.5,
+            "units" : "bpm",
+            "Min" : 164,
+            "date" : "2026-11-26 11:37:00 +0100",
+            "Max" : 168
+          },
+          {
+            "Min" : 138,
+            "date" : "2026-11-26 11:38:00 +0100",
+            "units" : "bpm",
+            "Avg" : 157.41666666666666,
+            "Max" : 166
+          },
+          {
+            "date" : "2026-11-26 11:39:00 +0100",
+            "units" : "bpm",
+            "Avg" : 143.5,
+            "Min" : 136,
+            "Max" : 151
+          },
+          {
+            "Avg" : 156.08333333333334,
+            "Min" : 149,
+            "Max" : 163,
+            "units" : "bpm",
+            "date" : "2026-11-26 11:40:00 +0100"
+          },
+          {
+            "Max" : 164,
+            "Avg" : 159.16666666666666,
+            "units" : "bpm",
+            "date" : "2026-11-26 11:41:00 +0100",
+            "Min" : 155
+          },
+          {
+            "Min" : 157,
+            "Avg" : 159.5,
+            "date" : "2026-11-26 11:42:00 +0100",
+            "Max" : 162,
+            "units" : "bpm"
+          },
+          {
+            "date" : "2026-11-26 11:43:00 +0100",
+            "units" : "bpm",
+            "Avg" : 161.16666666666666,
+            "Min" : 159,
+            "Max" : 163
+          },
+          {
+            "units" : "bpm",
+            "Max" : 164,
+            "Min" : 161,
+            "Avg" : 161.91666666666666,
+            "date" : "2026-11-26 11:44:00 +0100"
+          },
+          {
+            "Min" : 166,
+            "date" : "2026-11-26 11:45:00 +0100",
+            "Max" : 174,
+            "Avg" : 169.58333333333334,
+            "units" : "bpm"
+          },
+          {
+            "Avg" : 172.25,
+            "Max" : 174,
+            "units" : "bpm",
+            "date" : "2026-11-26 11:46:00 +0100",
+            "Min" : 171
+          },
+          {
+            "Max" : 172,
+            "units" : "bpm",
+            "Avg" : 160,
+            "Min" : 151,
+            "date" : "2026-11-26 11:47:00 +0100"
+          },
+          {
+            "Max" : 158,
+            "Avg" : 149.33333333333334,
+            "units" : "bpm",
+            "date" : "2026-11-26 11:48:00 +0100",
+            "Min" : 133
+          },
+          {
+            "date" : "2026-11-26 11:49:00 +0100",
+            "Avg" : 143,
+            "Min" : 130,
+            "units" : "bpm",
+            "Max" : 152
+          },
+          {
+            "Avg" : 144.07692307692307,
+            "Min" : 136,
+            "date" : "2026-11-26 11:50:00 +0100",
+            "Max" : 153,
+            "units" : "bpm"
+          },
+          {
+            "date" : "2026-11-26 11:51:00 +0100",
+            "units" : "bpm",
+            "Avg" : 152.09090909090909,
+            "Min" : 143,
+            "Max" : 159
+          },
+          {
+            "units" : "bpm",
+            "Max" : 156,
+            "Avg" : 144.69230769230768,
+            "Min" : 132,
+            "date" : "2026-11-26 11:52:00 +0100"
+          },
+          {
+            "units" : "bpm",
+            "date" : "2026-11-26 11:53:00 +0100",
+            "Min" : 134,
+            "Max" : 164,
+            "Avg" : 152.91666666666666
+          },
+          {
+            "Avg" : 171.08333333333334,
+            "date" : "2026-11-26 11:54:00 +0100",
+            "Max" : 176,
+            "Min" : 164,
+            "units" : "bpm"
+          },
+          {
+            "Min" : 142,
+            "Avg" : 153.63636363636363,
+            "Max" : 168,
+            "date" : "2026-11-26 11:55:00 +0100",
+            "units" : "bpm"
+          },
+          {
+            "Avg" : 163.15384615384616,
+            "units" : "bpm",
+            "date" : "2026-11-26 11:56:00 +0100",
+            "Min" : 148,
+            "Max" : 173
+          },
+          {
+            "date" : "2026-11-26 11:57:00 +0100",
+            "Max" : 168,
+            "Avg" : 154.09090909090909,
+            "Min" : 143,
+            "units" : "bpm"
+          },
+          {
+            "date" : "2026-11-26 11:58:00 +0100",
+            "Min" : 141,
+            "Max" : 158,
+            "units" : "bpm",
+            "Avg" : 152.30769230769232
+          },
+          {
+            "Avg" : 150.66666666666666,
+            "Min" : 141,
+            "date" : "2026-11-26 11:59:00 +0100",
+            "units" : "bpm",
+            "Max" : 160
+          },
+          {
+            "Max" : 154,
+            "units" : "bpm",
+            "Avg" : 144.54545454545453,
+            "date" : "2026-11-26 12:00:00 +0100",
+            "Min" : 136
+          },
+          {
+            "Max" : 154,
+            "Avg" : 144,
+            "Min" : 137,
+            "units" : "bpm",
+            "date" : "2026-11-26 12:01:00 +0100"
+          },
+          {
+            "Max" : 164,
+            "units" : "bpm",
+            "Avg" : 161.09090909090909,
+            "date" : "2026-11-26 12:02:00 +0100",
+            "Min" : 153
+          },
+          {
+            "Avg" : 157.80000000000001,
+            "date" : "2026-11-26 12:03:00 +0100",
+            "units" : "bpm",
+            "Min" : 157,
+            "Max" : 158
+          }
+        ],
+        "heartRate" : {
+          "max" : {
+            "qty" : 176,
+            "units" : "bpm"
+          },
+          "avg" : {
+            "qty" : 155.18684926184929,
+            "units" : "bpm"
+          },
+          "min" : {
+            "qty" : 118,
+            "units" : "bpm"
+          }
+        }
+      }
+    ]
+  }
+}
